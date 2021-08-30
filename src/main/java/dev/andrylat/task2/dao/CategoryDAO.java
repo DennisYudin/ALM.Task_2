@@ -6,8 +6,9 @@ import java.util.List;
 
 public interface CategoryDAO {
 
-    List<Category> findAll();
-    void insert(Category category);
-    void update(Category category);
-    void delete(long categoryId);
+    Category getCategoryById(long theId);
+    List<Category> getCategories();
+    void saveCategory(Category theCategory);
+    void updateCategory(Category theCategory);
+    void deleteCategoryById(long theId);
 }

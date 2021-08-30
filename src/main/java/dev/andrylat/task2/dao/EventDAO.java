@@ -6,9 +6,14 @@ import java.util.List;
 
 public interface EventDAO {
 
-    List<Event> findAll();
-    List<Event> findByTitle(String title);
-    void insert(Event event);
-    void update(Event event);
-    void delete(long eventId);
+    Event getEventById(long theId);
+    List<Event> getEvents();
+
+    void saveEvent(Event theEvent);
+    void updateEvent(Event theEvent);
+    void deleteEvent(long theId);
+
+    List<Event> sortByName();
+    List<Event> sortByPrice();
+    List<Event> sortByDate();
 }

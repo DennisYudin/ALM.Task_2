@@ -12,16 +12,6 @@ public class Location {
     private String description;
     private int capacityPeople;
 
-    public Location(long id, String title, String workingHours, String type,
-                    String address, String description, int capacityPeople) {
-        this.id = id;
-        this.title = title;
-        this.workingHours = workingHours;
-        this.type = type;
-        this.address = address;
-        this.description = description;
-        this.capacityPeople = capacityPeople;
-    }
 
     public long getId() {
         return id;
@@ -83,7 +73,7 @@ public class Location {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Event location = (Event) o;
+        Location location = (Location) o;
         return title.equals(location.title);
     }
 

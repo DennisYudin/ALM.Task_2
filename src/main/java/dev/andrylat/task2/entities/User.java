@@ -12,17 +12,6 @@ public class User {
     private String password;
     private String type;
 
-    public User(long id, String name, String surname,
-                String email, String login, String password, String type) {
-        this.id = id;
-        this.name = name;
-        this.surname = surname;
-        this.email = email;
-        this.login = login;
-        this.password = password;
-        this.type = type;
-    }
-
     public long getId() {
         return id;
     }

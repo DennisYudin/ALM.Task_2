@@ -11,17 +11,14 @@ public class Event {
     private int price;
     private String status;
     private String description;
-    private Location location;
+    private long locationId;
 
-    public Event(long id, String title, Date date,
-                 int price, String status, String description, Location location) {
-        this.id = id;
-        this.title = title;
-        this.date = date;
-        this.price = price;
-        this.status = status;
-        this.description = description;
-        this.location = location;
+    public long getLocationId() {
+        return locationId;
+    }
+
+    public void setLocationId(long locationId) {
+        this.locationId = locationId;
     }
 
     public long getId() {
@@ -72,13 +69,6 @@ public class Event {
         this.description = description;
     }
 
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -91,18 +81,5 @@ public class Event {
     @Override
     public int hashCode() {
         return Objects.hash(title);
-    }
-
-    @Override
-    public String toString() {
-        return "Event{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", date=" + date +
-                ", price=" + price +
-                ", status='" + status + '\'' +
-                ", description='" + description + '\'' +
-                ", location=" + location +
-                '}';
     }
 }

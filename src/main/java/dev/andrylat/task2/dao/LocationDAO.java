@@ -14,5 +14,4 @@ public interface LocationDAO {
     void updateLocation(Location location);
     void deleteLocation(long id);
 
-    Page<Location> sortByName(Sort sort);
 }

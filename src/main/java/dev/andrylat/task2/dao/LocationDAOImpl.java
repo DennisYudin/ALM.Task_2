@@ -90,10 +90,4 @@ public class LocationDAOImpl implements LocationDAO {
                 id
         );
     }
-
-    @Override
-    public Page<Location> sortByName(Sort sort) {
-
-        return null;
-    }
 }

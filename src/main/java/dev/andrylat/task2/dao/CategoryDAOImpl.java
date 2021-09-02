@@ -78,17 +78,17 @@ public class CategoryDAOImpl implements CategoryDAO {
         );
     }
 
-    @Override
-    public Page<Category> sortByName(Pageable page) {
-        String sql = "SELECT * FROM categories ORDER BY ?";
-
-        Sort.Order order = !page.getSort().isEmpty() ? page.getSort().toList().get(0) : Sort.Order.by("name");
-
-        List<Category> categories = jdbcTemplate.query(
-                sql,
-                new Object[]{order.getDirection().name()},
-                new CategoryRowMapper()
-        );
-        return new PageImpl<Category>(categories, page, 10);
-    }
+//    @Override Для ближайшего будущего
+//    public Page<Category> sortByName(Pageable page) {
+//        String sql = "SELECT * FROM categories ORDER BY ?";
+//
+//        Sort.Order order = !page.getSort().isEmpty() ? page.getSort().toList().get(0) : Sort.Order.by("name");
+//
+//        List<Category> categories = jdbcTemplate.query(
+//                sql,
+//                new Object[]{order.getDirection().name()},
+//                new CategoryRowMapper()
+//        );
+//        return new PageImpl<Category>(categories, page, 10);
+//    }
 }

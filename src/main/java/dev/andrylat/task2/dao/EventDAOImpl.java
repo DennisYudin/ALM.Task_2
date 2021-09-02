@@ -89,26 +89,4 @@ public class EventDAOImpl implements EventDAO {
                 id
         );
     }
-
-    @Override
-    public List<Event> sortByName() {
-
-        return null;
-    }
-
-    private Sort sortByNameAsc() {
-//        Sort name = new Sort(Sort.Direction.ASC, "name");
-//        return name;
-        return null;
-    }
-
-    @Override
-    public List<Event> sortByPrice() {
-        return null;
-    }
-
-    @Override
-    public List<Event> sortByDate() {
-        return null;
-    }
 }

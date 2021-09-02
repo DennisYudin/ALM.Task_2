@@ -13,10 +13,6 @@ public interface EventDAO {
     void saveEvent(Event event);
     void updateEvent(Event event);
     void deleteEvent(long id);
-
-    List<Event> sortByName();
-    List<Event> sortByPrice();
-    List<Event> sortByDate();
 }
 
 

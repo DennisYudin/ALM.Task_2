@@ -6,9 +6,9 @@ import java.util.List;
 
 public interface TicketDAO {
 
-    List<Ticket> findAll();
-    List<Ticket> findByTitle(String title);
-    void insert(Ticket ticket);
-    void update(Ticket ticket);
-    void delete(long ticketId);
+    Ticket getTicket(long id);
+    List<Ticket> getTickets();
+    void saveTicket(Ticket ticket);
+    void updateTicket(Ticket ticket);
+    void deleteTicket(long id);
 }

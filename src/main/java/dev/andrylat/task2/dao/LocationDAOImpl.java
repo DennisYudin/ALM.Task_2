@@ -1,117 +1,99 @@
 package dev.andrylat.task2.dao;
 
 import dev.andrylat.task2.entities.Location;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Repository("locationDAO")
 public class LocationDAOImpl implements LocationDAO {
+    private static final String SQL_SELECT_LOCATION = "SELECT * FROM locations WHERE location_id = ?";
+    private static final String SQL_SELECT_ALL_LOCATIONS = "SELECT * FROM locations ORDER BY name";
+    private static final String SQL_SAVE_LOCATION = "INSERT INTO locations " +
+            "(location_id, name, working_hours, type, address, description, capacity_people)" +
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    private static final String SQL_UPDATE_LOCATION = "UPDATE locations " +
+            "SET name = ?, working_hours = ?, type = ?, address = ?, description = ?, capacity_people = ? " +
+            "WHERE location_id = ?";
+    private static final String SQL_DELETE_LOCATION = "DELETE FROM locations WHERE location_id = ?";
 
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
-    public LocationDAOImpl(NamedParameterJdbcTemplate jdbcTemplate) {
+    public LocationDAOImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public Location getLocationById(long theId) {
-
-        String sqlQuery = "SELECT * FROM locations WHERE location_id = :id";
-
-        final Map<String, Object> namedParameters = new HashMap<>();
-
-        namedParameters.put("id", theId);
+    public Location getLocation(long id) {
 
         Location location = jdbcTemplate.queryForObject(
-                sqlQuery,
-                namedParameters,
-                new LocationRowMapper());
-
+                SQL_SELECT_LOCATION,
+                new Object[]{id},
+                new LocationRowMapper()
+        );
         return location;
     }
 
     @Override
     public List<Location> getLocations() {
 
-        String sqlQuery = "SELECT * FROM locations ORDER BY name";
-
         List<Location> locations = jdbcTemplate.query(
-                sqlQuery,
-                new LocationRowMapper());
-
+                SQL_SELECT_ALL_LOCATIONS,
+                new LocationRowMapper()
+        );
         return locations;
     }
 
     @Override
-    public void saveLocation(Location theLocation) {
+    public void saveLocation(Location location) {
 
-        String sqlQuery = "INSERT INTO locations (location_id, name, working_hours, type, " +
-                "address, description, capacity_people) " +
-                "VALUES (:id, :name, :workingHours, :type, :address, :description, :capacityPeople)";
-
-        long id = theLocation.getId();
-        String name = theLocation.getTitle();
-        String workingHours = theLocation.getWorkingHours();
-        String type = theLocation.getType();
-        String address = theLocation.getAddress();
-        String description = theLocation.getDescription();
-        int capacityPeople = theLocation.getCapacityPeople();
+        long id = location.getId();
+        String name = location.getTitle();
+        String workingHours = location.getWorkingHours();
+        String type = location.getType();
+        String address = location.getAddress();
+        String description = location.getDescription();
+        int capacityPeople = location.getCapacityPeople();
 
         jdbcTemplate.update(
-                sqlQuery,
-                Map.of(
-                        "id", id,
-                        "name", name,
-                        "workingHours", workingHours,
-                        "type", type,
-                        "address", address,
-                        "description", description,
-                        "capacityPeople", capacityPeople
-                )
+                SQL_SAVE_LOCATION,
+                id, name, workingHours, type, address, description, capacityPeople
         );
     }
 
     @Override
-    public void updateLocation(Location theLocation) {
+    public void updateLocation(Location location) {
 
-        String sqlQuery = "UPDATE locations SET name = :name, working_hours = :workingHours, " +
-                "type = :type, address = :address, description = :description, capacity_people = :capacityPeople " +
-                "WHERE location_id = :id";
-
-        long id = theLocation.getId();
-        String name = theLocation.getTitle();
-        String workingHours = theLocation.getWorkingHours();
-        String type = theLocation.getType();
-        String address = theLocation.getAddress();
-        String description = theLocation.getDescription();
-        int capacityPeople = theLocation.getCapacityPeople();
+        long id = location.getId();
+        String name = location.getTitle();
+        String workingHours = location.getWorkingHours();
+        String type = location.getType();
+        String address = location.getAddress();
+        String description = location.getDescription();
+        int capacityPeople = location.getCapacityPeople();
 
         jdbcTemplate.update(
-                sqlQuery,
-                Map.of(
-                        "id", id,
-                        "name", name,
-                        "workingHours", workingHours,
-                        "type", type,
-                        "address", address,
-                        "description", description,
-                        "capacityPeople", capacityPeople
-                )
+                SQL_UPDATE_LOCATION,
+                name, workingHours, type, address, description, capacityPeople, id
         );
     }
 
     @Override
-    public void deleteLocation(long theId) {
-
-        String sqlQuery = "DELETE FROM locations WHERE location_id = :id";
+    public void deleteLocation(long id) {
 
         jdbcTemplate.update(
-                sqlQuery,
-                Map.of(
-                        "id", theId
-                )
+                SQL_DELETE_LOCATION,
+                id
         );
+    }
+
+    @Override
+    public Page<Location> sortByName(Sort sort) {
+
+        return null;
     }
 }

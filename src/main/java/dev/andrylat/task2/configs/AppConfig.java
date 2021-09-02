@@ -57,32 +57,11 @@ public class AppConfig {
     }
 
     @Bean
-    public NamedParameterJdbcTemplate namedParamJdbcTemplate() {
+    public JdbcTemplate JdbcTemplate() {
 
-        NamedParameterJdbcTemplate namedParamJdbcTemplate =
-                new NamedParameterJdbcTemplate(dataSource());
+        JdbcTemplate JdbcTemplate = new JdbcTemplate(dataSource());
 
-        return namedParamJdbcTemplate;
-    }
-
-    @Bean
-    public CategoryDAO categoryDAO() {
-        return new CategoryDAOImpl(namedParamJdbcTemplate());
-    }
-
-    @Bean
-    public UserDAO userDAO() {
-        return new UserDAOImpl(namedParamJdbcTemplate());
-    }
-
-    @Bean
-    public LocationDAO locationDAO() {
-        return new LocationDAOImpl(namedParamJdbcTemplate());
-    }
-
-    @Bean
-    public EventDAO eventDAO() {
-        return new EventDAOImpl(namedParamJdbcTemplate());
+        return JdbcTemplate;
     }
 }
 

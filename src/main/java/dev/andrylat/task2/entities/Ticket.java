@@ -6,20 +6,36 @@ import java.util.Objects;
 public class Ticket {
 
     private long id;
+    private String eventName;
     private String uniqueCode;
     private Date creationDate;
     private String status;
-    private User customer;
-    private Event event;
+    private long userId;
 
-    public Ticket(long id, String uniqueCode, Date creationDate,
-                  String status, User customer, Event event) {
-        this.id = id;
-        this.uniqueCode = uniqueCode;
-        this.creationDate = creationDate;
-        this.status = status;
-        this.customer = customer;
-        this.event = event;
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    private long eventId;
+
+    public String getEventName() {
+        return eventName;
+    }
+
+    public void setEventName(String eventName) {
+        this.eventName = eventName;
     }
 
     public long getId() {
@@ -54,22 +70,6 @@ public class Ticket {
         this.status = status;
     }
 
-    public User getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(User customer) {
-        this.customer = customer;
-    }
-
-    public Event getEvent() {
-        return event;
-    }
-
-    public void setEvent(Event event) {
-        this.event = event;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -87,11 +87,12 @@ public class Ticket {
     public String toString() {
         return "Ticket{" +
                 "id=" + id +
+                ", eventName='" + eventName + '\'' +
                 ", uniqueCode='" + uniqueCode + '\'' +
                 ", creationDate=" + creationDate +
                 ", status='" + status + '\'' +
-                ", customer=" + customer +
-                ", event=" + event +
+                ", userId=" + userId +
+                ", eventId=" + eventId +
                 '}';
     }
 }

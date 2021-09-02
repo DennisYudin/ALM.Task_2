@@ -7,10 +7,10 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class EventRowMapper implements RowMapper {
+public class EventRowMapper implements RowMapper<Event> {
 
     @Override
-    public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+    public Event mapRow(ResultSet rs, int rowNum) throws SQLException {
 
         Event event = new Event();
 

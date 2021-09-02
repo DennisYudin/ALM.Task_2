@@ -6,9 +6,9 @@ import java.util.List;
 
 public interface UserDAO {
 
-    User getUserById(long theId);
+    User getUser(long id);
     List<User> getUsers();
-    void saveUser(User theUser);
-    void updateUser(User theUser);
-    void deleteUser(long theId);
+    void saveUser(User user);
+    void updateUser(User user);
+    void deleteUser(long id);
 }

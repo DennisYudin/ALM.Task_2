@@ -82,4 +82,17 @@ public class Event {
     public int hashCode() {
         return Objects.hash(title);
     }
+
+    @Override
+    public String toString() {
+        return "Event{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", date=" + date +
+                ", price=" + price +
+                ", status='" + status + '\'' +
+                ", description='" + description + '\'' +
+                ", locationId=" + locationId +
+                '}';
+    }
 }

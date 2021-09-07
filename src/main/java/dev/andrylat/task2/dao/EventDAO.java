@@ -1,7 +1,6 @@
 package dev.andrylat.task2.dao;
 
 import dev.andrylat.task2.entities.Event;
-import org.springframework.data.domain.Sort;
 
 import java.util.List;
 

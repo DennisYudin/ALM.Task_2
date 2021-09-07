@@ -1,11 +1,16 @@
-package dev.andrylat.task2.dao;
+package dev.andrylat.task2.implementations;
 
+import dev.andrylat.task2.dao.TicketDAO;
 import dev.andrylat.task2.entities.Ticket;
+import dev.andrylat.task2.mappers.TicketRowMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
 
+@Repository("ticketDAO")
 public class TicketDAOImpl implements TicketDAO {
     private static final String SQL_SELECT_TICKET = "SELECT * FROM tickets WHERE ticket_id = ?";
     private static final String SQL_SELECT_ALL_TICKETS = "SELECT * FROM tickets";
@@ -19,6 +24,7 @@ public class TicketDAOImpl implements TicketDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Autowired
     public TicketDAOImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }

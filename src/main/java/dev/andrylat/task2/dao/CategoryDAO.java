@@ -1,9 +1,6 @@
 package dev.andrylat.task2.dao;
 
 import dev.andrylat.task2.entities.Category;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.util.List;
 

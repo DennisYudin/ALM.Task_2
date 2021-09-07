@@ -1,6 +1,9 @@
-package dev.andrylat.task2.dao;
+package dev.andrylat.task2.implementations;
 
+import dev.andrylat.task2.dao.UserDAO;
 import dev.andrylat.task2.entities.User;
+import dev.andrylat.task2.mappers.UserRowMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +23,7 @@ public class UserDAOImpl implements UserDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Autowired
     public UserDAOImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }

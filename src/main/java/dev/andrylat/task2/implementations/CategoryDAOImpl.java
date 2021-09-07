@@ -1,10 +1,9 @@
-package dev.andrylat.task2.dao;
+package dev.andrylat.task2.implementations;
 
+import dev.andrylat.task2.dao.CategoryDAO;
 import dev.andrylat.task2.entities.Category;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import dev.andrylat.task2.mappers.CategoryRowMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +19,7 @@ public class CategoryDAOImpl implements CategoryDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Autowired
     public CategoryDAOImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }

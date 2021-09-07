@@ -2,18 +2,8 @@ package dev.andrylat.task2;
 
 import dev.andrylat.task2.configs.AppConfig;
 import dev.andrylat.task2.dao.CategoryDAO;
-import dev.andrylat.task2.dao.LocationDAO;
-import dev.andrylat.task2.dao.UserDAO;
 import dev.andrylat.task2.entities.Category;
-import dev.andrylat.task2.entities.Location;
-import dev.andrylat.task2.entities.User;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -96,42 +86,34 @@ public class Main {
 ////        userDAO.updateUser(userUpdate);
 ////        userDAO.deleteUser(13);
 //
-//        AnnotationConfigApplicationContext context =
-//                new AnnotationConfigApplicationContext(AppConfig.class);
+        AnnotationConfigApplicationContext context =
+                new AnnotationConfigApplicationContext(AppConfig.class);
+
+        CategoryDAO categoryDAO = (CategoryDAO) context.getBean("categoryDAO");
+
+        Category categoryById = categoryDAO.getCategory(1);
+        System.out.println(categoryById);
 //
-//        CategoryDAO categoryDAO = (CategoryDAO) context.getBean("categoryDAO");
+//        List<Category> categories = categoryDAO.getCategories();
 //
-//        Pageable page = PageRequest.of(0,10, Sort.by("name"));
+//        for (Category category:categories) {
+//            System.out.println(category);
+//        }
 //
-//        Page<Category> categoriesSorted = categoryDAO.sortByName(page);
+////        Category categorySave = new Category();
+////
+////        categorySave.setId(14);
+////        categorySave.setTitle("test one");
+////
+////        categoryDAO.saveCategory(categorySave);
 //
-//        List<Category> result = categoriesSorted.getContent();
+//        Category categoryUpdate = new Category();
 //
-//        System.out.println(result);
+//        categoryUpdate.setId(14);
+//        categoryUpdate.setTitle("updated");
 //
-////        Category categoryById = categoryDAO.getCategory(1);
-////        System.out.println(categoryById);
-////
-////        List<Category> categories = categoryDAO.getCategories();
-////
-////        for (Category category:categories) {
-////            System.out.println(category);
-////        }
-////
-//////        Category categorySave = new Category();
-//////
-//////        categorySave.setId(14);
-//////        categorySave.setTitle("test one");
-//////
-//////        categoryDAO.saveCategory(categorySave);
-////
-////        Category categoryUpdate = new Category();
-////
-////        categoryUpdate.setId(14);
-////        categoryUpdate.setTitle("updated");
-////
-////        categoryDAO.updateCategory(categoryUpdate);
-////
-////        categoryDAO.deleteCategory(14);
+//        categoryDAO.updateCategory(categoryUpdate);
+//
+//        categoryDAO.deleteCategory(14);
     }
 }

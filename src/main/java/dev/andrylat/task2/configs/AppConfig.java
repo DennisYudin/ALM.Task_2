@@ -1,8 +1,6 @@
 package dev.andrylat.task2.configs;
 
 import com.mchange.v2.c3p0.DriverManagerDataSource;
-import dev.andrylat.task2.dao.*;
-import dev.andrylat.task2.entities.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -10,10 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.web.servlet.LocaleContextResolver;
 import org.springframework.web.servlet.ViewResolver;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 import javax.sql.DataSource;
@@ -41,19 +36,19 @@ public class AppConfig {
     @Bean
     public DataSource dataSource() {
 
-        DriverManagerDataSource theDataSource = new DriverManagerDataSource();
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
 
         String jdbcDriver = propertyDataHolder.getProperty("jdbc.driver");
         String jdbcUrl = propertyDataHolder.getProperty("jdbc.url");
         String jdbcUser = propertyDataHolder.getProperty("jdbc.user");
         String jdbcPassword = propertyDataHolder.getProperty("jdbc.password");
 
-        theDataSource.setDriverClass(jdbcDriver);
-        theDataSource.setJdbcUrl(jdbcUrl);
-        theDataSource.setUser(jdbcUser);
-        theDataSource.setPassword(jdbcPassword);
+        dataSource.setDriverClass(jdbcDriver);
+        dataSource.setJdbcUrl(jdbcUrl);
+        dataSource.setUser(jdbcUser);
+        dataSource.setPassword(jdbcPassword);
 
-        return theDataSource;
+        return dataSource;
     }
 
     @Bean

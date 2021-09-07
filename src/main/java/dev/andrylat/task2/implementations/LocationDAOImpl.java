@@ -1,9 +1,9 @@
-package dev.andrylat.task2.dao;
+package dev.andrylat.task2.implementations;
 
+import dev.andrylat.task2.dao.LocationDAO;
 import dev.andrylat.task2.entities.Location;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import dev.andrylat.task2.mappers.LocationRowMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +23,7 @@ public class LocationDAOImpl implements LocationDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Autowired
     public LocationDAOImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }

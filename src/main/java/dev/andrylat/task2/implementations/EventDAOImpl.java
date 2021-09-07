@@ -1,7 +1,9 @@
-package dev.andrylat.task2.dao;
+package dev.andrylat.task2.implementations;
 
+import dev.andrylat.task2.dao.EventDAO;
 import dev.andrylat.task2.entities.Event;
-import org.springframework.data.domain.Sort;
+import dev.andrylat.task2.mappers.EventRowMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -22,6 +24,7 @@ public class EventDAOImpl implements EventDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Autowired
     public EventDAOImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }

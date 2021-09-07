@@ -1,4 +1,4 @@
-package dev.andrylat.task2.dao;
+package dev.andrylat.task2.mappers;
 
 import dev.andrylat.task2.entities.Category;
 import org.springframework.jdbc.core.RowMapper;
@@ -13,11 +13,8 @@ public class CategoryRowMapper implements RowMapper<Category> {
 
         Category category = new Category();
 
-        long id = rs.getLong("category_id");
-        String name = rs.getString("name");
-
-        category.setId(id);
-        category.setTitle(name);
+        category.setId(rs.getLong("category_id"));
+        category.setTitle(rs.getString("name"));
 
         return category;
     }

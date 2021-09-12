@@ -1,12 +1,14 @@
 package dev.andrylat.task2.implementations;
 
-import dev.andrylat.task2.configs.AppConfig;
+import configs.AppConfigTest;
 import dev.andrylat.task2.dao.CategoryDAO;
 import dev.andrylat.task2.entities.Category;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
@@ -14,108 +16,106 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = AppConfig.class)
+@ContextConfiguration(classes = AppConfigTest.class)
+@Sql(scripts = {"file:src/test/resources/createTables.sql",
+        "file:src/test/resources/populateTables.sql"},
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "file:src/test/resources/cleanUpDatabase.sql",
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class CategoryDAOImplTest {
+    private static final String SQL_SELECT_CATEGORY = "SELECT name FROM categories WHERE category_id = ?";
+    private static final String SQL_SELECT_ALL_CATEGORIES = "SELECT name FROM categories";
 
     @Autowired
     private CategoryDAO categoryDAO;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Test
-    public void shouldReturnCategoryById() {
+    public void getCategory_ShouldGetCategoryById_WhenInputIsId() {
 
-        Category category = new Category();
-        category.setId(1000);
-        category.setTitle("exhibition");
+        long id = 1;
+        String actualCategory = categoryDAO.getCategory(id).getTitle();
+        String expectedCategory = "exhibition";
 
-        categoryDAO.deleteCategory(category.getId());
-
-        assertNotNull(categoryDAO);
-        categoryDAO.saveCategory(category);
-
-        long id = category.getId();
-        Category categoryTitle = categoryDAO.getCategory(id);
-
-        assertEquals("exhibition", categoryTitle.getTitle());
-
-        categoryDAO.deleteCategory(category.getId());
+        assertEquals(expectedCategory, actualCategory);
     }
 
     @Test
-    public void shouldReturnAllCategories() {
+    public void getCategories_ShouldGetAllCategories_WhenCallMethod() {
 
-        Category category = new Category();
-        category.setId(1000);
-        category.setTitle("exhibition");
+        List<Category> expectedCategories = categoryDAO.getCategories();
+        List<String> actualCategories = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_CATEGORIES,
+                String.class
+        );
+        int expectedSize = expectedCategories.size();
+        int actualSize = actualCategories.size();
 
-        categoryDAO.deleteCategory(category.getId());
-        assertNotNull(categoryDAO);
+        assertEquals(expectedSize, actualSize);
 
-        categoryDAO.saveCategory(category);
+        for (Category category : expectedCategories) {
+            String expectedCategory = category.getTitle();
 
-        List<Category> categories = categoryDAO.getCategories();
-
-        assertTrue(categories.size() == 1);
-
-        categoryDAO.deleteCategory(category.getId());
+            assertTrue(actualCategories.contains(expectedCategory));
+        }
     }
 
     @Test
-    public void shouldSaveCategoryIntoTable() {
+    public void saveCategory_ShouldSaveCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
-        Category category = new Category();
-        category.setId(1000);
-        category.setTitle("exhibition");
+        Category newCategory = new Category();
+        newCategory.setId(4);
+        newCategory.setTitle("opera");
 
-        categoryDAO.deleteCategory(category.getId());
-        assertNotNull(categoryDAO);
+        categoryDAO.saveCategory(newCategory);
 
-        categoryDAO.saveCategory(category);
-
-        long id = category.getId();
-        Category categoryTitle = categoryDAO.getCategory(id);
-
-        assertEquals("exhibition", categoryTitle.getTitle());
-
-        categoryDAO.deleteCategory(category.getId());
+        long checkId = 4;
+        String expectedCategoryName = "opera";
+        String actualCategoryName = jdbcTemplate.queryForObject(
+                SQL_SELECT_CATEGORY,
+                new Object[]{checkId},
+                String.class
+        );
+        assertEquals(expectedCategoryName, actualCategoryName);
     }
 
     @Test
-    public void shouldUpdateCategory() {
+    public void updateCategory_ShouldUpdateExistedCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
-        Category category = new Category();
-        category.setId(1000);
-        category.setTitle("exhibition");
+        Category newCategory = new Category();
+        newCategory.setId(1);
+        newCategory.setTitle("opera");
 
-        categoryDAO.deleteCategory(category.getId());
-        assertNotNull(categoryDAO);
+        categoryDAO.updateCategory(newCategory);
 
-        categoryDAO.saveCategory(category);
-
-        category.setId(1000);
-        category.setTitle("concert");
-
-        categoryDAO.updateCategory(category);
-
-        long id = category.getId();
-        Category categoryTitle = categoryDAO.getCategory(id);
-
-        assertEquals("concert", categoryTitle.getTitle());
-
-        categoryDAO.deleteCategory(category.getId());
+        long checkId = 1;
+        String expectedCategoryName = "opera";
+        String actualCategoryName = jdbcTemplate.queryForObject(
+                SQL_SELECT_CATEGORY,
+                new Object[]{checkId},
+                String.class
+        );
+        assertEquals(expectedCategoryName, actualCategoryName);
     }
 
     @Test
-    public void shouldDeleteCategory() {
+    public void deleteCategory_ShouldDeleteCategoryById_WhenInputIsId() {
 
-        Category category = new Category();
-        category.setId(1000);
-        category.setTitle("exhibition");
+        long categoryId = 1;
 
-        categoryDAO.deleteCategory(category.getId());
+        categoryDAO.deleteCategory(categoryId);
 
-        assertNotNull(categoryDAO);
-        categoryDAO.saveCategory(category);
+        int expectedSize = 2;
+        List<String> сategories = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_CATEGORIES,
+                String.class
+        );
+        int actualSize = сategories.size();
+        String checkedName = "exhibition";
 
-        categoryDAO.deleteCategory(category.getId());
+        assertEquals(expectedSize, actualSize);
+        assertFalse(сategories.contains(checkedName));
     }
 }

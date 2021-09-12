@@ -24,13 +24,16 @@ public class CategoryDAOImpl implements CategoryDAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @Autowired
+    private CategoryRowMapper categoryRowMapper;
+
     @Override
     public Category getCategory(long id) {
 
         Category category = jdbcTemplate.queryForObject(
                 SQL_SELECT_CATEGORY,
                 new Object[]{id},
-                new CategoryRowMapper()
+                categoryRowMapper
         );
         return category;
     }

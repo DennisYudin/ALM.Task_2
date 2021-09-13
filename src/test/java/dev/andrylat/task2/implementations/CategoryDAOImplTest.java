@@ -23,8 +23,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @Sql(scripts = "file:src/test/resources/cleanUpDatabase.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class CategoryDAOImplTest {
-    private static final String SQL_SELECT_CATEGORY = "SELECT name FROM categories WHERE category_id = ?";
+    private static final String SQL_SELECT_CATEGORY_NAME = "SELECT name FROM categories WHERE category_id = ?";
+    private static final String SQL_SELECT_CATEGORY_ID = "SELECT category_id FROM categories WHERE name = ?";
     private static final String SQL_SELECT_ALL_CATEGORIES = "SELECT name FROM categories";
+    private static final String SQL_SELECT_ALL_CATEGORIES_ID = "SELECT category_id FROM categories";
 
     @Autowired
     private CategoryDAO categoryDAO;
@@ -36,68 +38,97 @@ public class CategoryDAOImplTest {
     public void getCategory_ShouldGetCategoryById_WhenInputIsId() {
 
         long id = 1;
-        String actualCategory = categoryDAO.getCategory(id).getTitle();
-        String expectedCategory = "exhibition";
 
-        assertEquals(expectedCategory, actualCategory);
+        String expectedName = "exhibition";
+        String actualName = categoryDAO.getCategory(id).getTitle();
+
+        long expectedId = 1;
+        long actualId = categoryDAO.getCategory(id).getId();
+
+        assertEquals(expectedName, actualName);
+        assertEquals(expectedId, actualId);
     }
 
     @Test
     public void getCategories_ShouldGetAllCategories_WhenCallMethod() {
 
-        List<Category> expectedCategories = categoryDAO.getCategories();
-        List<String> actualCategories = jdbcTemplate.queryForList(
+        List<Category> actualCategories = categoryDAO.getCategories();
+        List<String> expectedCategories = jdbcTemplate.queryForList(
                 SQL_SELECT_ALL_CATEGORIES,
                 String.class
         );
-        int expectedSize = expectedCategories.size();
+        List<Long> expectedId = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_CATEGORIES_ID,
+                Long.class
+        );
         int actualSize = actualCategories.size();
+        int expectedSize = expectedCategories.size();
 
         assertEquals(expectedSize, actualSize);
 
-        for (Category category : expectedCategories) {
-            String expectedCategory = category.getTitle();
+        for (Category category : actualCategories) {
+            long actualCategoryId = category.getId();
+            String actualCategoryName = category.getTitle();
 
-            assertTrue(actualCategories.contains(expectedCategory));
+            assertTrue(expectedId.contains(actualCategoryId));
+            assertTrue(expectedCategories.contains(actualCategoryName));
         }
     }
 
     @Test
     public void saveCategory_ShouldSaveCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
-        Category newCategory = new Category();
-        newCategory.setId(4);
-        newCategory.setTitle("opera");
+        Category newCategory = getCategory(4, "opera");
 
         categoryDAO.saveCategory(newCategory);
 
         long checkId = 4;
-        String expectedCategoryName = "opera";
-        String actualCategoryName = jdbcTemplate.queryForObject(
-                SQL_SELECT_CATEGORY,
+
+        String expectedName = "opera";
+        String actualName = jdbcTemplate.queryForObject(
+                SQL_SELECT_CATEGORY_NAME,
                 new Object[]{checkId},
                 String.class
         );
-        assertEquals(expectedCategoryName, actualCategoryName);
+
+        String checkName = "opera";
+
+        long expectedId = 4;
+        Long actualId = jdbcTemplate.queryForObject(
+                SQL_SELECT_CATEGORY_ID,
+                new Object[]{checkName},
+                Long.class
+        );
+        assertEquals(expectedId, actualId);
+        assertEquals(expectedName, actualName);
     }
 
     @Test
     public void updateCategory_ShouldUpdateExistedCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
-        Category newCategory = new Category();
-        newCategory.setId(1);
-        newCategory.setTitle("opera");
+        Category updatedCategory = getCategory(1, "opera");
 
-        categoryDAO.updateCategory(newCategory);
+        categoryDAO.updateCategory(updatedCategory);
 
         long checkId = 1;
-        String expectedCategoryName = "opera";
-        String actualCategoryName = jdbcTemplate.queryForObject(
-                SQL_SELECT_CATEGORY,
+
+        String expectedName = "opera";
+        String actualName = jdbcTemplate.queryForObject(
+                SQL_SELECT_CATEGORY_NAME,
                 new Object[]{checkId},
                 String.class
         );
-        assertEquals(expectedCategoryName, actualCategoryName);
+
+        String checkName = "opera";
+
+        int expectedId = 1;
+        Integer actualId = jdbcTemplate.queryForObject(
+                SQL_SELECT_CATEGORY_ID,
+                new Object[]{checkName},
+                Integer.class
+        );
+        assertEquals(expectedId, actualId);
+        assertEquals(expectedName, actualName);
     }
 
     @Test
@@ -107,15 +138,32 @@ public class CategoryDAOImplTest {
 
         categoryDAO.deleteCategory(categoryId);
 
-        int expectedSize = 2;
         List<String> сategories = jdbcTemplate.queryForList(
                 SQL_SELECT_ALL_CATEGORIES,
                 String.class
         );
+        int expectedSize = 2;
         int actualSize = сategories.size();
+
         String checkedName = "exhibition";
 
         assertEquals(expectedSize, actualSize);
         assertFalse(сategories.contains(checkedName));
+
+        List<Integer> identificationNumbers = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_CATEGORIES_ID,
+                Integer.class
+        );
+        int checkedId = 1;
+
+        assertFalse(identificationNumbers.contains(checkedId));
+    }
+
+    private Category getCategory(long id, String title) {
+        Category category = new Category();
+        category.setId(id);
+        category.setTitle(title);
+        return category;
     }
 }
+

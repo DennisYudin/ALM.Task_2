@@ -34,7 +34,7 @@ public class Category {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Category category = (Category) o;
-        return title.equals(category.title);
+        return Objects.equals(title, category.title);
     }
 
     @Override

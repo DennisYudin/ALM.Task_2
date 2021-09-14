@@ -23,9 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Sql(scripts = "file:src/test/resources/cleanUpDatabase.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class CategoryDAOImplTest {
-    private static final String SQL_SELECT_CATEGORY_NAME = "SELECT name FROM categories WHERE category_id = ?";
     private static final String SQL_SELECT_CATEGORY_ID = "SELECT category_id FROM categories WHERE name = ?";
-    private static final String SQL_SELECT_ALL_CATEGORIES = "SELECT name FROM categories";
     private static final String SQL_SELECT_ALL_CATEGORIES_ID = "SELECT category_id FROM categories";
 
     @Autowired
@@ -42,36 +40,26 @@ public class CategoryDAOImplTest {
         String expectedName = "exhibition";
         String actualName = categoryDAO.getCategory(id).getTitle();
 
-        long expectedId = 1;
-        long actualId = categoryDAO.getCategory(id).getId();
-
         assertEquals(expectedName, actualName);
-        assertEquals(expectedId, actualId);
     }
 
     @Test
     public void getCategories_ShouldGetAllCategories_WhenCallMethod() {
 
         List<Category> actualCategories = categoryDAO.getCategories();
-        List<String> expectedCategories = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_CATEGORIES,
-                String.class
-        );
         List<Long> expectedId = jdbcTemplate.queryForList(
                 SQL_SELECT_ALL_CATEGORIES_ID,
                 Long.class
         );
         int actualSize = actualCategories.size();
-        int expectedSize = expectedCategories.size();
+        int expectedSize = expectedId.size();
 
         assertEquals(expectedSize, actualSize);
 
         for (Category category : actualCategories) {
             long actualCategoryId = category.getId();
-            String actualCategoryName = category.getTitle();
 
             assertTrue(expectedId.contains(actualCategoryId));
-            assertTrue(expectedCategories.contains(actualCategoryName));
         }
     }
 
@@ -82,15 +70,6 @@ public class CategoryDAOImplTest {
 
         categoryDAO.saveCategory(newCategory);
 
-        long checkId = 4;
-
-        String expectedName = "opera";
-        String actualName = jdbcTemplate.queryForObject(
-                SQL_SELECT_CATEGORY_NAME,
-                new Object[]{checkId},
-                String.class
-        );
-
         String checkName = "opera";
 
         long expectedId = 4;
@@ -100,7 +79,6 @@ public class CategoryDAOImplTest {
                 Long.class
         );
         assertEquals(expectedId, actualId);
-        assertEquals(expectedName, actualName);
     }
 
     @Test
@@ -109,15 +87,6 @@ public class CategoryDAOImplTest {
         Category updatedCategory = getCategory(1, "opera");
 
         categoryDAO.updateCategory(updatedCategory);
-
-        long checkId = 1;
-
-        String expectedName = "opera";
-        String actualName = jdbcTemplate.queryForObject(
-                SQL_SELECT_CATEGORY_NAME,
-                new Object[]{checkId},
-                String.class
-        );
 
         String checkName = "opera";
 
@@ -128,7 +97,6 @@ public class CategoryDAOImplTest {
                 Integer.class
         );
         assertEquals(expectedId, actualId);
-        assertEquals(expectedName, actualName);
     }
 
     @Test
@@ -138,25 +106,17 @@ public class CategoryDAOImplTest {
 
         categoryDAO.deleteCategory(categoryId);
 
-        List<String> сategories = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_CATEGORIES,
-                String.class
+        List<Long> actualId = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_CATEGORIES_ID,
+                Long.class
         );
         int expectedSize = 2;
-        int actualSize = сategories.size();
+        int actualSize = actualId.size();
 
-        String checkedName = "exhibition";
-
-        assertEquals(expectedSize, actualSize);
-        assertFalse(сategories.contains(checkedName));
-
-        List<Integer> identificationNumbers = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_CATEGORIES_ID,
-                Integer.class
-        );
         int checkedId = 1;
 
-        assertFalse(identificationNumbers.contains(checkedId));
+        assertEquals(expectedSize, actualSize);
+        assertFalse(actualId.contains(checkedId));
     }
 
     private Category getCategory(long id, String title) {

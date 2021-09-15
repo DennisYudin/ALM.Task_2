@@ -17,7 +17,7 @@ public class TicketRowMapper implements RowMapper<Ticket> {
         ticket.setId(rs.getLong("ticket_id"));
         ticket.setEventName(rs.getString("event_name"));
         ticket.setUniqueCode(rs.getString("unique_number"));
-        ticket.setCreationDate(rs.getDate("creation_date"));
+        ticket.setCreationDate(rs.getTimestamp("creation_date"));
         ticket.setStatus(rs.getString("status"));
         ticket.setUserId(rs.getLong("user_id"));
         ticket.setEventId(rs.getLong("event_id"));

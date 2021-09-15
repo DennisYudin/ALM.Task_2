@@ -40,7 +40,7 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public List<User> getUsers() {
+    public List<User> findAll() {
 
         List<User> users = jdbcTemplate.query(
                 SQL_SELECT_ALL_USERS,
@@ -50,7 +50,7 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public void saveUser(User user) {
+    public void save(User user) {
 
         long id = user.getId();
         String name = user.getName();
@@ -67,7 +67,7 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public void updateUser(User user) {
+    public void update(User user) {
 
         long id = user.getId();
         String name = user.getName();
@@ -84,7 +84,7 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public void deleteUser(long id) {
+    public void delete(long id) {
 
         jdbcTemplate.update(
                 SQL_DELETE_USER,

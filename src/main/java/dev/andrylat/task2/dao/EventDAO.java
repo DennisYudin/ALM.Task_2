@@ -7,11 +7,10 @@ import java.util.List;
 public interface EventDAO {
 
     Event getEvent(long id);
-    List<Event> getEvents();
-
-    void saveEvent(Event event);
-    void updateEvent(Event event);
-    void deleteEvent(long id);
+    List<Event> findAll();
+    void save(Event event);
+    void update(Event event);
+    void delete(long id);
 }
 
 

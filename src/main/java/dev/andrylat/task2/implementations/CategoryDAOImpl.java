@@ -39,7 +39,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     }
 
     @Override
-    public List<Category> getCategories() {
+    public List<Category> findAll() {
 
         List<Category> categories = jdbcTemplate.query(
                 SQL_SELECT_ALL_CATEGORIES,
@@ -49,7 +49,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     }
 
     @Override
-    public void saveCategory(Category category) {
+    public void save(Category category) {
 
         long id = category.getId();
         String title = category.getTitle();
@@ -61,7 +61,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     }
 
     @Override
-    public void updateCategory(Category category) {
+    public void update(Category category) {
 
         long id = category.getId();
         String title = category.getTitle();
@@ -73,7 +73,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     }
 
     @Override
-    public void deleteCategory(long id) {
+    public void delete(long id) {
 
         jdbcTemplate.update(
                 SQL_DELETE_CATEGORY,

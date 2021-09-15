@@ -17,8 +17,3 @@ INSERT INTO users (user_id, name, surname, email, login, password, type)
 VALUES (2000, 'Dennis', 'Yudin', 'dennisYudin@mail.ru', 'Big boss', '0000', 'customer');
 INSERT INTO users (user_id, name, surname, email, login, password, type)
 VALUES (2001, 'Mark', 'Batmanov', 'redDragon@mail.ru', 'HelloWorld', '1234', 'customer');
-
-INSERT INTO tickets (ticket_id, event_name, unique_number, creation_date, status, user_id, event_id)
-VALUES (3000, 'Oxxxymiron concert', '123456789', '17-02-1992 20:45:00', 'actual', 2000, 1000);
-INSERT INTO tickets (ticket_id, event_name, unique_number, creation_date, status, user_id, event_id)
-VALUES (3001, 'Basta', '987654321', '18-02-1986 02:30:00', 'cancelled', 2001, 1001);

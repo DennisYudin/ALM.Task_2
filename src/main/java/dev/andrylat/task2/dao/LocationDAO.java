@@ -7,8 +7,8 @@ import java.util.List;
 public interface LocationDAO {
 
     Location getLocation(long id);
-    List<Location> getLocations();
-    void saveLocation(Location location);
-    void updateLocation(Location location);
-    void deleteLocation(long id);
+    List<Location> findAll();
+    void save(Location location);
+    void update(Location location);
+    void delete(long id);
 }

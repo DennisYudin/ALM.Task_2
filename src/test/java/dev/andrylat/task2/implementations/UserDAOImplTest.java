@@ -1,12 +1,14 @@
 package dev.andrylat.task2.implementations;
 
-import dev.andrylat.task2.configs.AppConfig;
+import configs.AppConfigTest;
 import dev.andrylat.task2.dao.UserDAO;
 import dev.andrylat.task2.entities.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
@@ -14,132 +16,161 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = AppConfig.class)
+@ContextConfiguration(classes = AppConfigTest.class)
+@Sql(scripts = {"file:src/test/resources/createTables.sql",
+        "file:src/test/resources/populateTablesWithoutTicketTable.sql"},
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class UserDAOImplTest {
+    private static final String SQL_SELECT_USER_ID = "SELECT user_id " +
+            "FROM users " +
+            "WHERE name = ? AND surname = ? AND email = ? AND login = ? AND password = ? AND type = ?";
+    private static final String SQL_SELECT_ALL_USERS_ID = "SELECT user_id FROM users";
 
     @Autowired
     private UserDAO userDAO;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Test
-    public void shouldReturnUserById() {
+    public void getUser_ShouldGetUserById_WhenInputIsId() {
 
-        User user = new User();
-        user.setId(1000);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
+        long id = 2000;
 
-        userDAO.deleteUser(user.getId());
-        assertNotNull(userDAO);
+        String expectedName = "Dennis";
+        String expectedSurname = "Yudin";
+        String expectedEmail = "dennisYudin@mail.ru";
+        String expectedLogin = "Big boss";
+        String expectedPassword = "0000";
+        String expectedType = "customer";
 
-        userDAO.saveUser(user);
+        String actualName = userDAO.getUser(id).getName();
+        String actualSurname = userDAO.getUser(id).getSurname();
+        String actualEmail = userDAO.getUser(id).getEmail();
+        String actualLogin = userDAO.getUser(id).getLogin();
+        String actualPassword = userDAO.getUser(id).getPassword();
+        String actualType = userDAO.getUser(id).getType();
 
-        long id = user.getId();
-        User userName = userDAO.getUser(id);
-
-        assertEquals("Dennis", userName.getName());
-
-        userDAO.deleteUser(user.getId());
+        assertEquals(expectedName, actualName);
+        assertEquals(expectedSurname, actualSurname);
+        assertEquals(expectedEmail, actualEmail);
+        assertEquals(expectedLogin, actualLogin);
+        assertEquals(expectedPassword, actualPassword);
+        assertEquals(expectedType, actualType);
     }
 
     @Test
-    public void shouldReturnAllUsers() {
+    public void findAll_ShouldGetAllUsers_WhenCallMethod() {
 
-        User user = new User();
-        user.setId(1000);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
+        List<User> actualUsers = userDAO.findAll();
+        List<Long> expectedId = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_USERS_ID,
+                Long.class
+        );
+        int expectedSize = expectedId.size();
+        int actualSize = actualUsers.size();
 
-        userDAO.deleteUser(user.getId());
-        assertNotNull(userDAO);
+        assertEquals(expectedSize, actualSize);
 
-        userDAO.saveUser(user);
+        for (User user : actualUsers) {
+            long actualUserId = user.getId();
 
-        List<User> users = userDAO.getUsers();
-
-        assertTrue(users.size() == 1);
-
-        userDAO.deleteUser(user.getId());
+            assertTrue(expectedId.contains(actualUserId));
+        }
     }
 
     @Test
-    public void shouldSaveUserIntoTable() {
+    public void save_ShouldSaveNewUser_WhenInputIsUserObjectWithDetails() {
 
-        User user = new User();
-        user.setId(1000);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
+        User newUser = getUser(
+                2002, "Vandam",
+                "Ivanov", "machoMan2013@yandex.ru",
+                "wondefulFlower", "1234",
+                "customer"
+        );
 
-        userDAO.deleteUser(user.getId());
-        assertNotNull(userDAO);
+        userDAO.save(newUser);
 
-        userDAO.saveUser(user);
+        String checkName = "Vandam";
+        String checkSurname = "Ivanov";
+        String checkEmail = "machoMan2013@yandex.ru";
+        String checkLogin = "wondefulFlower";
+        String checkPassword = "1234";
+        String checkType = "customer";
 
-        long id = user.getId();
-        User userName = userDAO.getUser(id);
-
-        assertEquals("Dennis", userName.getName());
-
-        userDAO.deleteUser(user.getId());
+        long expectedId = 2002;
+        Long actualId = jdbcTemplate.queryForObject(
+                SQL_SELECT_USER_ID,
+                new Object[]{checkName, checkSurname, checkEmail,
+                        checkLogin, checkPassword, checkType},
+                Long.class
+        );
+        assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void shouldUpdateUser() {
+    public void update_ShouldUpdateExistedUser_WhenInputIsUserObjectWithDetails() {
 
-        User user = new User();
-        user.setId(1000);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
+        User updatedUser = getUser(
+                2000, "Oleg",
+                "Petrov", "machoMan2013@yandex.ru",
+                "wondefulFlower", "0000",
+                "customer"
+        );
 
-        userDAO.deleteUser(user.getId());
+        userDAO.update(updatedUser);
 
-        assertNotNull(userDAO);
-        userDAO.saveUser(user);
+        String checkName = "Oleg";
+        String checkSurname = "Petrov";
+        String checkEmail = "machoMan2013@yandex.ru";
+        String checkLogin = "wondefulFlower";
+        String checkPassword = "0000";
+        String checkType = "customer";
 
-        user.setName("Mark");
-
-        userDAO.updateUser(user);
-
-        long id = user.getId();
-        User userName = userDAO.getUser(id);
-
-        assertEquals("Mark", userName.getName());
-
-        userDAO.deleteUser(user.getId());
+        long expectedId = 2000;
+        Long actualId = jdbcTemplate.queryForObject(
+                SQL_SELECT_USER_ID,
+                new Object[]{checkName, checkSurname, checkEmail,
+                        checkLogin, checkPassword, checkType},
+                Long.class
+        );
+        assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void shouldDeleteUser() {
+    public void delete_ShouldDeleteUserById_WhenInputIsId() {
 
+        long userId = 2000;
+
+        userDAO.delete(userId);
+
+        List<Long> actualId = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_USERS_ID,
+                Long.class
+        );
+        int expectedSize = 1;
+        int actualSize = actualId.size();
+
+        int checkedId = 2000;
+
+        assertEquals(expectedSize, actualSize);
+        assertFalse(actualId.contains(checkedId));
+    }
+
+    private User getUser(long id, String name,
+                         String surname, String email,
+                         String login, String password,
+                         String type) {
         User user = new User();
-        user.setId(1000);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
-
-        userDAO.deleteUser(user.getId());
-
-        assertNotNull(userDAO);
-        userDAO.saveUser(user);
-
-        userDAO.deleteUser(user.getId());
+        user.setId(id);
+        user.setName(name);
+        user.setSurname(surname);
+        user.setEmail(email);
+        user.setLogin(login);
+        user.setPassword(password);
+        user.setType(type);
+        return user;
     }
 }

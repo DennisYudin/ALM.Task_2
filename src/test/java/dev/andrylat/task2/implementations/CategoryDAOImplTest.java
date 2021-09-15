@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Sql(scripts = {"file:src/test/resources/createTables.sql",
         "file:src/test/resources/populateTables.sql"},
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(scripts = "file:src/test/resources/cleanUpDatabase.sql",
+@Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class CategoryDAOImplTest {
     private static final String SQL_SELECT_CATEGORY_ID = "SELECT category_id FROM categories WHERE name = ?";
@@ -44,9 +44,9 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void getCategories_ShouldGetAllCategories_WhenCallMethod() {
+    public void findAll_ShouldGetAllCategories_WhenCallMethod() {
 
-        List<Category> actualCategories = categoryDAO.getCategories();
+        List<Category> actualCategories = categoryDAO.findAll();
         List<Long> expectedId = jdbcTemplate.queryForList(
                 SQL_SELECT_ALL_CATEGORIES_ID,
                 Long.class
@@ -64,11 +64,11 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void saveCategory_ShouldSaveCategory_WhenInputIsCategoryObjectWithIdAndName() {
+    public void save_ShouldSaveCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
         Category newCategory = getCategory(4, "opera");
 
-        categoryDAO.saveCategory(newCategory);
+        categoryDAO.save(newCategory);
 
         String checkName = "opera";
 
@@ -82,11 +82,11 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void updateCategory_ShouldUpdateExistedCategory_WhenInputIsCategoryObjectWithIdAndName() {
+    public void update_ShouldUpdateExistedCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
         Category updatedCategory = getCategory(1, "opera");
 
-        categoryDAO.updateCategory(updatedCategory);
+        categoryDAO.update(updatedCategory);
 
         String checkName = "opera";
 
@@ -100,11 +100,11 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void deleteCategory_ShouldDeleteCategoryById_WhenInputIsId() {
+    public void delete_ShouldDeleteCategoryById_WhenInputIsId() {
 
         long categoryId = 1;
 
-        categoryDAO.deleteCategory(categoryId);
+        categoryDAO.delete(categoryId);
 
         List<Long> actualId = jdbcTemplate.queryForList(
                 SQL_SELECT_ALL_CATEGORIES_ID,

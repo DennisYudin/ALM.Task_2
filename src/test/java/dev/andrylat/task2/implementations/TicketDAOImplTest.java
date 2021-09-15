@@ -1,18 +1,14 @@
 package dev.andrylat.task2.implementations;
 
-import dev.andrylat.task2.configs.AppConfig;
-import dev.andrylat.task2.dao.EventDAO;
-import dev.andrylat.task2.dao.LocationDAO;
+import configs.AppConfigTest;
 import dev.andrylat.task2.dao.TicketDAO;
-import dev.andrylat.task2.dao.UserDAO;
-import dev.andrylat.task2.entities.Event;
-import dev.andrylat.task2.entities.Location;
 import dev.andrylat.task2.entities.Ticket;
-import dev.andrylat.task2.entities.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.text.ParseException;
@@ -21,384 +17,175 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = AppConfig.class)
+@ContextConfiguration(classes = AppConfigTest.class)
+@Sql(scripts = {"file:src/test/resources/createTables.sql",
+        "file:src/test/resources/populateTables.sql"},
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class TicketDAOImplTest {
-
-    @Autowired
-    private UserDAO userDAO;
-
-    @Autowired
-    private EventDAO eventDAO;
+    private static final String SQL_SELECT_TICKET_ID = "SELECT ticket_id " +
+            "FROM tickets " +
+            "WHERE event_name = ? AND unique_number = ? AND creation_date = ? " +
+            "AND status = ? AND user_id = ? AND event_id = ?";
+    private static final String SQL_SELECT_ALL_TICKETS_ID = "SELECT ticket_id FROM tickets";
 
     @Autowired
     private TicketDAO ticketDAO;
 
     @Autowired
-    private LocationDAO locationDAO;
+    private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void shouldReturnTicketById() throws ParseException {
+    public void getTicket_ShouldGetTicketById_WhenInputIsId() throws ParseException {
 
-        Location location = new Location();
-        location.setId(1001);
-        location.setTitle("Drunk oyster");
-        location.setWorkingHours("08:00-22:00");
-        location.setType("bar");
-        location.setAddress("FooBar street");
-        location.setDescription("Bla bla bla for the test");
-        location.setCapacityPeople(300);
+        long id = 3000;
 
-        locationDAO.deleteLocation(location.getId());
+        String expectedName = "Oxxxymiron concert";
+        String expectedUniqueNumber = "123456789";
+        Date expectedDate = getDate("17-02-1992 20:45:00");
+        String expectedStatus = "actual";
+        long expectedUserId = 2000;
+        long expectedEventId = 1000;
 
-        assertNotNull(locationDAO);
-        locationDAO.saveLocation(location);
+        String actualName = ticketDAO.getTicket(id).getEventName();
+        String actualUniqueNumber = ticketDAO.getTicket(id).getUniqueCode();
+        Date actualDate = ticketDAO.getTicket(id).getCreationDate();
+        String actualStatus = ticketDAO.getTicket(id).getStatus();
+        long actualUserId = ticketDAO.getTicket(id).getUserId();
+        long actualEventId = ticketDAO.getTicket(id).getEventId();
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
-        String dateInString = "13-08-2021 12:00:00";
-        Date concertDate = sdf.parse(dateInString);
-
-        Event event = new Event();
-        event.setId(1002);
-        event.setTitle("Concert Oxxxymiron");
-        event.setDate(concertDate);
-        event.setPrice(1500);
-        event.setStatus("relevant");
-        event.setDescription("Bla bla bla just for test...");
-        event.setLocationId(1001);
-
-        ticketDAO.deleteTicket(event.getId());
-        eventDAO.deleteEvent(event.getId());
-
-        assertNotNull(eventDAO);
-        eventDAO.saveEvent(event);
-
-        User user = new User();
-        user.setId(1003);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
-
-        userDAO.deleteUser(user.getId());
-
-        assertNotNull(userDAO);
-        userDAO.saveUser(user);
-
-        Ticket ticket = new Ticket();
-        ticket.setId(1004);
-        ticket.setEventName("Concert Oxxxymiron");
-        ticket.setUniqueCode("123456789");
-        ticket.setCreationDate(concertDate);
-        ticket.setStatus("active");
-        ticket.setUserId(user.getId());
-        ticket.setEventId(event.getId());
-
-        assertNotNull(ticketDAO);
-        ticketDAO.saveTicket(ticket);
-
-        long id = ticket.getId();
-        Ticket ticketEventName = ticketDAO.getTicket(id);
-
-        assertEquals("Concert Oxxxymiron", ticketEventName.getEventName());
-
-        ticketDAO.deleteTicket(ticket.getId());
-        locationDAO.deleteLocation(location.getId());
-        eventDAO.deleteEvent(event.getId());
-        userDAO.deleteUser(user.getId());
+        assertEquals(expectedName, actualName);
+        assertEquals(expectedUniqueNumber, actualUniqueNumber);
+        assertEquals(expectedDate, actualDate);
+        assertEquals(expectedStatus, actualStatus);
+        assertEquals(expectedUserId, actualUserId);
+        assertEquals(expectedEventId, actualEventId);
     }
 
     @Test
-    public void shouldReturnAllTickets() throws ParseException {
-        Location location = new Location();
-        location.setId(1001);
-        location.setTitle("Drunk oyster");
-        location.setWorkingHours("08:00-22:00");
-        location.setType("bar");
-        location.setAddress("FooBar street");
-        location.setDescription("Bla bla bla for the test");
-        location.setCapacityPeople(300);
+    public void findAll_ShouldGetAllTickets_WhenCallMethod() throws ParseException {
 
-        locationDAO.deleteLocation(location.getId());
+        List<Ticket> actualTickets = ticketDAO.findAll();
+        List<Long> expectedId = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_TICKETS_ID,
+                Long.class
+        );
+        int expectedSize = expectedId.size();
+        int actualSize = actualTickets.size();
 
-        assertNotNull(locationDAO);
-        locationDAO.saveLocation(location);
+        assertEquals(expectedSize, actualSize);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
-        String dateInString = "13-08-2021 12:00:00";
-        Date concertDate = sdf.parse(dateInString);
+        for (Ticket ticket : actualTickets) {
+            long actualTicketId = ticket.getId();
 
-        Event event = new Event();
-        event.setId(1002);
-        event.setTitle("Concert Oxxxymiron");
-        event.setDate(concertDate);
-        event.setPrice(1500);
-        event.setStatus("relevant");
-        event.setDescription("Bla bla bla just for test...");
-        event.setLocationId(1001);
-
-        ticketDAO.deleteTicket(event.getId());
-        eventDAO.deleteEvent(event.getId());
-
-        assertNotNull(eventDAO);
-        eventDAO.saveEvent(event);
-
-        User user = new User();
-        user.setId(1003);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
-
-        userDAO.deleteUser(user.getId());
-
-        assertNotNull(userDAO);
-        userDAO.saveUser(user);
-
-        Ticket ticket = new Ticket();
-        ticket.setId(1004);
-        ticket.setEventName("Concert Oxxxymiron");
-        ticket.setUniqueCode("123456789");
-        ticket.setCreationDate(concertDate);
-        ticket.setStatus("active");
-        ticket.setUserId(user.getId());
-        ticket.setEventId(event.getId());
-
-        assertNotNull(ticketDAO);
-        ticketDAO.saveTicket(ticket);
-
-        List<Ticket> tickets = ticketDAO.getTickets();
-
-        assertTrue(tickets.size() == 1);
-
-        ticketDAO.deleteTicket(ticket.getId());
-        locationDAO.deleteLocation(location.getId());
-        eventDAO.deleteEvent(event.getId());
-        userDAO.deleteUser(user.getId());
+            assertTrue(expectedId.contains(actualTicketId));
+        }
     }
 
     @Test
-    public void shouldSaveTicketIntoTable() throws ParseException {
+    public void save_ShouldSaveTicket_WhenInputIsTicketObjectWithDetails() throws ParseException {
 
-        Location location = new Location();
-        location.setId(1001);
-        location.setTitle("Drunk oyster");
-        location.setWorkingHours("08:00-22:00");
-        location.setType("bar");
-        location.setAddress("FooBar street");
-        location.setDescription("Bla bla bla for the test");
-        location.setCapacityPeople(300);
+        Date concertDate = getDate("17-02-1992 16:30:00");
 
-        locationDAO.deleteLocation(location.getId());
+        Ticket newTicket = getTicket(
+                3002, "circus du soleil",
+                "0000000000", concertDate,
+                "actual", 2000, 1000
+        );
 
-        assertNotNull(locationDAO);
-        locationDAO.saveLocation(location);
+        ticketDAO.save(newTicket);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
-        String dateInString = "13-08-2021 12:00:00";
-        Date concertDate = sdf.parse(dateInString);
+        String checkName = "circus du soleil";
+        String checkUniquenamber = "0000000000";
+        Date checkDate = concertDate;
+        String checkStatus = "actual";
+        long checkUserId = 2000;
+        long checkEventId = 1000;
 
-        Event event = new Event();
-        event.setId(1002);
-        event.setTitle("Concert Oxxxymiron");
-        event.setDate(concertDate);
-        event.setPrice(1500);
-        event.setStatus("relevant");
-        event.setDescription("Bla bla bla just for test...");
-        event.setLocationId(1001);
-
-        ticketDAO.deleteTicket(event.getId());
-        eventDAO.deleteEvent(event.getId());
-
-        assertNotNull(eventDAO);
-        eventDAO.saveEvent(event);
-
-        User user = new User();
-        user.setId(1003);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
-
-        userDAO.deleteUser(user.getId());
-
-        assertNotNull(userDAO);
-        userDAO.saveUser(user);
-
-        Ticket ticket = new Ticket();
-        ticket.setId(1004);
-        ticket.setEventName("Concert Oxxxymiron");
-        ticket.setUniqueCode("123456789");
-        ticket.setCreationDate(concertDate);
-        ticket.setStatus("active");
-        ticket.setUserId(user.getId());
-        ticket.setEventId(event.getId());
-
-        assertNotNull(ticketDAO);
-        ticketDAO.saveTicket(ticket);
-
-        long id = ticket.getId();
-        Ticket ticketEventName = ticketDAO.getTicket(id);
-
-        assertEquals("Concert Oxxxymiron", ticketEventName.getEventName());
-
-        ticketDAO.deleteTicket(ticket.getId());
-        locationDAO.deleteLocation(location.getId());
-        eventDAO.deleteEvent(event.getId());
-        userDAO.deleteUser(user.getId());
+        long expectedId = 3002;
+        Long actualId = jdbcTemplate.queryForObject(
+                SQL_SELECT_TICKET_ID,
+                new Object[]{checkName, checkUniquenamber, checkDate,
+                        checkStatus, checkUserId, checkEventId},
+                Long.class
+        );
+        assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void shouldUpdateTicket() throws ParseException {
+    public void update_ShouldUpdateExistedTicket_WhenInputIsTicketObjectWithDetails() throws ParseException {
 
-        Location location = new Location();
-        location.setId(1001);
-        location.setTitle("Drunk oyster");
-        location.setWorkingHours("08:00-22:00");
-        location.setType("bar");
-        location.setAddress("FooBar street");
-        location.setDescription("Bla bla bla for the test");
-        location.setCapacityPeople(300);
+        Date concertDate = getDate("01-09-2021 22:13:00");
 
-        locationDAO.deleteLocation(location.getId());
+        Ticket updatedTicket = getTicket(
+                3000, "Comedy club",
+                "111111111", concertDate,
+                "actual", 2000, 1000
+        );
 
-        assertNotNull(locationDAO);
-        locationDAO.saveLocation(location);
+        ticketDAO.update(updatedTicket);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
-        String dateInString = "13-08-2021 12:00:00";
-        Date concertDate = sdf.parse(dateInString);
+        String checkName = "Comedy club";
+        String checkUniqueNumber = "111111111";
+        Date checkDate = concertDate;
+        String checkStatus = "actual";
+        long checkUserId = 2000;
+        long checkEventId = 1000;
 
-        Event event = new Event();
-        event.setId(1002);
-        event.setTitle("Concert Oxxxymiron");
-        event.setDate(concertDate);
-        event.setPrice(1500);
-        event.setStatus("relevant");
-        event.setDescription("Bla bla bla just for test...");
-        event.setLocationId(1001);
-
-        ticketDAO.deleteTicket(event.getId());
-        eventDAO.deleteEvent(event.getId());
-
-        assertNotNull(eventDAO);
-        eventDAO.saveEvent(event);
-
-        User user = new User();
-        user.setId(1003);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
-
-        userDAO.deleteUser(user.getId());
-
-        assertNotNull(userDAO);
-        userDAO.saveUser(user);
-
-        Ticket ticket = new Ticket();
-        ticket.setId(1004);
-        ticket.setEventName("Concert Oxxxymiron");
-        ticket.setUniqueCode("123456789");
-        ticket.setCreationDate(concertDate);
-        ticket.setStatus("active");
-        ticket.setUserId(user.getId());
-        ticket.setEventId(event.getId());
-
-        assertNotNull(ticketDAO);
-        ticketDAO.saveTicket(ticket);
-
-        ticket.setEventName("Eminem");
-
-        ticketDAO.updateTicket(ticket);
-
-        long id = ticket.getId();
-        Ticket ticketEventName = ticketDAO.getTicket(id);
-
-        assertEquals("Eminem", ticketEventName.getEventName());
-
-        ticketDAO.deleteTicket(ticket.getId());
-        locationDAO.deleteLocation(location.getId());
-        eventDAO.deleteEvent(event.getId());
-        userDAO.deleteUser(user.getId());
+        long expectedId = 3000;
+        Long actualId = jdbcTemplate.queryForObject(
+                SQL_SELECT_TICKET_ID,
+                new Object[]{checkName, checkUniqueNumber, checkDate,
+                        checkStatus, checkUserId, checkEventId},
+                Long.class
+        );
+        assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void shouldDeleteTicket() throws ParseException {
+    public void delete_ShouldDeleteTicketById_WhenInputIsId() throws ParseException {
 
-        Location location = new Location();
-        location.setId(1001);
-        location.setTitle("Drunk oyster");
-        location.setWorkingHours("08:00-22:00");
-        location.setType("bar");
-        location.setAddress("FooBar street");
-        location.setDescription("Bla bla bla for the test");
-        location.setCapacityPeople(300);
+        long ticketId = 3000;
 
-        locationDAO.deleteLocation(location.getId());
+        ticketDAO.delete(ticketId);
 
-        assertNotNull(locationDAO);
-        locationDAO.saveLocation(location);
+        List<Long> actualId = jdbcTemplate.queryForList(
+                SQL_SELECT_ALL_TICKETS_ID,
+                Long.class
+        );
+        int expectedSize = 1;
+        int actualSize = actualId.size();
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
-        String dateInString = "13-08-2021 12:00:00";
-        Date concertDate = sdf.parse(dateInString);
+        int checkedId = 3000;
 
-        Event event = new Event();
-        event.setId(1002);
-        event.setTitle("Concert Oxxxymiron");
-        event.setDate(concertDate);
-        event.setPrice(1500);
-        event.setStatus("relevant");
-        event.setDescription("Bla bla bla just for test...");
-        event.setLocationId(1001);
+        assertEquals(expectedSize, actualSize);
+        assertFalse(actualId.contains(checkedId));
+    }
 
-        ticketDAO.deleteTicket(event.getId());
-        eventDAO.deleteEvent(event.getId());
-
-        assertNotNull(eventDAO);
-        eventDAO.saveEvent(event);
-
-        User user = new User();
-        user.setId(1003);
-        user.setName("Dennis");
-        user.setSurname("Yudin");
-        user.setEmail("dennisYudin@mail.ru");
-        user.setLogin("BigBoss");
-        user.setPassword("1234");
-        user.setType("customer");
-
-        userDAO.deleteUser(user.getId());
-
-        assertNotNull(userDAO);
-        userDAO.saveUser(user);
-
+    private Ticket getTicket(long id, String name,
+                             String uniqueNumber, Date date,
+                             String status, long firstForeignKey,
+                             long secondForeignKey) {
         Ticket ticket = new Ticket();
-        ticket.setId(1004);
-        ticket.setEventName("Concert Oxxxymiron");
-        ticket.setUniqueCode("123456789");
-        ticket.setCreationDate(concertDate);
-        ticket.setStatus("active");
-        ticket.setUserId(user.getId());
-        ticket.setEventId(event.getId());
+        ticket.setId(id);
+        ticket.setEventName(name);
+        ticket.setUniqueCode(uniqueNumber);
+        ticket.setCreationDate(date);
+        ticket.setStatus(status);
+        ticket.setUserId(firstForeignKey);
+        ticket.setEventId(secondForeignKey);
+        return ticket;
+    }
 
-        assertNotNull(ticketDAO);
-        ticketDAO.saveTicket(ticket);
-
-        ticketDAO.deleteTicket(ticket.getId());
-
-        locationDAO.deleteLocation(location.getId());
-        eventDAO.deleteEvent(event.getId());
-        userDAO.deleteUser(user.getId());
+    private Date getDate(String date) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat(
+                "dd-M-yyyy hh:mm:ss");
+        String dateInString = date;
+        Date convertedDate = sdf.parse(dateInString);
+        return convertedDate;
     }
 }
+

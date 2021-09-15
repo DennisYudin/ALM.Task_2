@@ -41,7 +41,7 @@ public class TicketDAOImpl implements TicketDAO {
     }
 
     @Override
-    public List<Ticket> getTickets() {
+    public List<Ticket> findAll() {
 
         List<Ticket> tickets = jdbcTemplate.query(
                 SQL_SELECT_ALL_TICKETS,
@@ -51,7 +51,7 @@ public class TicketDAOImpl implements TicketDAO {
     }
 
     @Override
-    public void saveTicket(Ticket ticket) {
+    public void save(Ticket ticket) {
 
         long id = ticket.getId();
         String eventName = ticket.getEventName();
@@ -68,7 +68,7 @@ public class TicketDAOImpl implements TicketDAO {
     }
 
     @Override
-    public void updateTicket(Ticket ticket) {
+    public void update(Ticket ticket) {
 
         long id = ticket.getId();
         String eventName = ticket.getEventName();
@@ -85,7 +85,7 @@ public class TicketDAOImpl implements TicketDAO {
     }
 
     @Override
-    public void deleteTicket(long id) {
+    public void delete(long id) {
 
         jdbcTemplate.update(
                 SQL_DELETE_TICKET,

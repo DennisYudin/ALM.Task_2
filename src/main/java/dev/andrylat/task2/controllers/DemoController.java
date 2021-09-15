@@ -19,7 +19,7 @@ public class DemoController {
     @RequestMapping("/list")
     public String listCategories(Model theModel) {
 
-        List<Category> theCategories = categoryDAO.getCategories();
+        List<Category> theCategories = categoryDAO.findAll();
 
         theModel.addAttribute("categories", theCategories);
 

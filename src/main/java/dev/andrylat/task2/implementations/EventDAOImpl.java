@@ -41,7 +41,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
     @Override
-    public List<Event> getEvents() {
+    public List<Event> findAll() {
 
         List<Event> events = jdbcTemplate.query(
                 SQL_SELECT_ALL_EVENTS,
@@ -51,7 +51,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
     @Override
-    public void saveEvent(Event event) {
+    public void save(Event event) {
 
         long id = event.getId();
         String title = event.getTitle();
@@ -68,7 +68,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
     @Override
-    public void updateEvent(Event event) {
+    public void update(Event event) {
 
         long id = event.getId();
         String title = event.getTitle();
@@ -85,7 +85,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
     @Override
-    public void deleteEvent(long id) {
+    public void delete(long id) {
 
         jdbcTemplate.update(
                 SQL_DELETE_EVENT,

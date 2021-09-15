@@ -40,7 +40,7 @@ public class LocationDAOImpl implements LocationDAO {
     }
 
     @Override
-    public List<Location> getLocations() {
+    public List<Location> findAll() {
 
         List<Location> locations = jdbcTemplate.query(
                 SQL_SELECT_ALL_LOCATIONS,
@@ -50,7 +50,7 @@ public class LocationDAOImpl implements LocationDAO {
     }
 
     @Override
-    public void saveLocation(Location location) {
+    public void save(Location location) {
 
         long id = location.getId();
         String name = location.getTitle();
@@ -67,7 +67,7 @@ public class LocationDAOImpl implements LocationDAO {
     }
 
     @Override
-    public void updateLocation(Location location) {
+    public void update(Location location) {
 
         long id = location.getId();
         String name = location.getTitle();
@@ -84,7 +84,7 @@ public class LocationDAOImpl implements LocationDAO {
     }
 
     @Override
-    public void deleteLocation(long id) {
+    public void delete(long id) {
 
         jdbcTemplate.update(
                 SQL_DELETE_LOCATION,

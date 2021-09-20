@@ -29,13 +29,16 @@ public class EventDAOImpl implements EventDAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @Autowired
+    private EventRowMapper eventRowMapper;
+
     @Override
     public Event getById(long id) {
 
         Event event = jdbcTemplate.queryForObject(
                 SQL_SELECT_EVENT,
-                new Object[]{id},
-                new EventRowMapper()
+                eventRowMapper,
+                new Object[]{id}
         );
         return event;
     }
@@ -45,7 +48,7 @@ public class EventDAOImpl implements EventDAO {
 
         List<Event> events = jdbcTemplate.query(
                 SQL_SELECT_ALL_EVENTS,
-                new EventRowMapper()
+                eventRowMapper
         );
         return events;
     }

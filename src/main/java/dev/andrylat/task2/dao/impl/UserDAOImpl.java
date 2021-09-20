@@ -28,13 +28,16 @@ public class UserDAOImpl implements UserDAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @Autowired
+    private UserRowMapper userRowMapper;
+
     @Override
     public User getById(long id) {
 
         User theUser = jdbcTemplate.queryForObject(
                 SQL_SELECT_USER,
-                new Object[]{id},
-                new UserRowMapper()
+                userRowMapper,
+                new Object[]{id}
         );
         return theUser;
     }
@@ -44,7 +47,7 @@ public class UserDAOImpl implements UserDAO {
 
         List<User> users = jdbcTemplate.query(
                 SQL_SELECT_ALL_USERS,
-                new UserRowMapper()
+                userRowMapper
         );
         return users;
     }

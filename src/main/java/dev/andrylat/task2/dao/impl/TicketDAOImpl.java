@@ -29,13 +29,16 @@ public class TicketDAOImpl implements TicketDAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @Autowired
+    private TicketRowMapper ticketRowMapper;
+
     @Override
     public Ticket getById(long id) {
 
         Ticket ticket = jdbcTemplate.queryForObject(
                 SQL_SELECT_TICKET,
-                new Object[]{id},
-                new TicketRowMapper()
+                ticketRowMapper,
+                new Object[]{id}
         );
         return ticket;
     }
@@ -45,7 +48,7 @@ public class TicketDAOImpl implements TicketDAO {
 
         List<Ticket> tickets = jdbcTemplate.query(
                 SQL_SELECT_ALL_TICKETS,
-                new TicketRowMapper()
+                ticketRowMapper
         );
         return tickets;
     }

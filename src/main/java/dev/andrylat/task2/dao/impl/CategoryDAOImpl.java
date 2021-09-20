@@ -32,8 +32,8 @@ public class CategoryDAOImpl implements CategoryDAO {
 
         Category category = jdbcTemplate.queryForObject(
                 SQL_SELECT_CATEGORY,
-                new Object[]{id},
-                categoryRowMapper
+                categoryRowMapper,
+                new Object[]{id}
         );
         return category;
     }
@@ -43,7 +43,7 @@ public class CategoryDAOImpl implements CategoryDAO {
 
         List<Category> categories = jdbcTemplate.query(
                 SQL_SELECT_ALL_CATEGORIES,
-                new CategoryRowMapper()
+                categoryRowMapper
         );
         return categories;
     }

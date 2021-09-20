@@ -28,13 +28,16 @@ public class LocationDAOImpl implements LocationDAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @Autowired
+    private LocationRowMapper locationRowMapper;
+
     @Override
     public Location getById(long id) {
 
         Location location = jdbcTemplate.queryForObject(
                 SQL_SELECT_LOCATION,
-                new Object[]{id},
-                new LocationRowMapper()
+                locationRowMapper,
+                new Object[]{id}
         );
         return location;
     }
@@ -44,7 +47,7 @@ public class LocationDAOImpl implements LocationDAO {
 
         List<Location> locations = jdbcTemplate.query(
                 SQL_SELECT_ALL_LOCATIONS,
-                new LocationRowMapper()
+                locationRowMapper
         );
         return locations;
     }

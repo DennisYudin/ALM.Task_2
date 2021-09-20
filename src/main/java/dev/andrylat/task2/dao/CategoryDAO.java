@@ -18,3 +18,4 @@ public interface CategoryDAO extends GenericDAO<Category>{
 
 //    Page<Category> sortByName(Pageable page); для будущих времен... сюда не смотри
 }
+

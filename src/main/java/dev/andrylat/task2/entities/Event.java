@@ -14,5 +14,5 @@ public class Event {
     private String status;
     private String description;
     private long locationId;
-
 }
+

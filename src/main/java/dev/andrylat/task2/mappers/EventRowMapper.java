@@ -2,10 +2,12 @@ package dev.andrylat.task2.mappers;
 
 import dev.andrylat.task2.entities.Event;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Component
 public class EventRowMapper implements RowMapper<Event> {
 
     @Override

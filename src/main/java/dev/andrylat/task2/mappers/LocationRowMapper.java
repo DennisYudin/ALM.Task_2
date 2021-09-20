@@ -2,10 +2,12 @@ package dev.andrylat.task2.mappers;
 
 import dev.andrylat.task2.entities.Location;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Component
 public class LocationRowMapper implements RowMapper<Location> {
 
     @Override

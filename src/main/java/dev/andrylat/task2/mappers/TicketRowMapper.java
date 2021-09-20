@@ -2,11 +2,12 @@ package dev.andrylat.task2.mappers;
 
 import dev.andrylat.task2.entities.Ticket;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Date;
 
+@Component
 public class TicketRowMapper implements RowMapper<Ticket> {
 
     @Override

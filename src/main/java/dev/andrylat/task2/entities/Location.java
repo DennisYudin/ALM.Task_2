@@ -12,5 +12,5 @@ public class Location {
     private String address;
     private String description;
     private int capacityPeople;
-
 }
+

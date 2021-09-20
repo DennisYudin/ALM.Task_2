@@ -14,5 +14,5 @@ public class Ticket {
     private String status;
     private long userId;
     private long eventId;
-
 }
+

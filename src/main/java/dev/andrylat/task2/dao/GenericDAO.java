@@ -12,3 +12,4 @@ public interface GenericDAO<T> {
 
     void delete(long id);
 }
+

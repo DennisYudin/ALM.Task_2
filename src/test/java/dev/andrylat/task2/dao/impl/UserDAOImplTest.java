@@ -1,6 +1,6 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
-import configs.AppConfigTest;
+import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.UserDAO;
 import dev.andrylat.task2.entities.User;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ public class UserDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getUser_ShouldGetUserById_WhenInputIsId() {
+    public void getById_ShouldGetUserById_WhenInputIsId() {
 
         long id = 2000;
 
@@ -46,12 +46,12 @@ public class UserDAOImplTest {
         String expectedPassword = "0000";
         String expectedType = "customer";
 
-        String actualName = userDAO.getUser(id).getName();
-        String actualSurname = userDAO.getUser(id).getSurname();
-        String actualEmail = userDAO.getUser(id).getEmail();
-        String actualLogin = userDAO.getUser(id).getLogin();
-        String actualPassword = userDAO.getUser(id).getPassword();
-        String actualType = userDAO.getUser(id).getType();
+        String actualName = userDAO.getById(id).getName();
+        String actualSurname = userDAO.getById(id).getSurname();
+        String actualEmail = userDAO.getById(id).getEmail();
+        String actualLogin = userDAO.getById(id).getLogin();
+        String actualPassword = userDAO.getById(id).getPassword();
+        String actualType = userDAO.getById(id).getType();
 
         assertEquals(expectedName, actualName);
         assertEquals(expectedSurname, actualSurname);

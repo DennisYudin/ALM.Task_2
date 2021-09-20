@@ -1,6 +1,6 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
-import configs.AppConfigTest;
+import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.LocationDAO;
 import dev.andrylat.task2.entities.Location;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ public class LocationDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getLocation_ShouldGetLocationById_WhenInputIsId() {
+    public void getById_ShouldGetLocationById_WhenInputIsId() {
 
         long id = 100;
 
@@ -46,12 +46,12 @@ public class LocationDAOImplTest {
         String expectedDescription = "description test";
         int expectedCapacityPeople = 300;
 
-        String actualName = locationDAO.getLocation(id).getTitle();
-        String actualWorkingHours = locationDAO.getLocation(id).getWorkingHours();
-        String actualType = locationDAO.getLocation(id).getType();
-        String actualAddress = locationDAO.getLocation(id).getAddress();
-        String actualDescription = locationDAO.getLocation(id).getDescription();
-        int actualCapacityPeople = locationDAO.getLocation(id).getCapacityPeople();
+        String actualName = locationDAO.getById(id).getTitle();
+        String actualWorkingHours = locationDAO.getById(id).getWorkingHours();
+        String actualType = locationDAO.getById(id).getType();
+        String actualAddress = locationDAO.getById(id).getAddress();
+        String actualDescription = locationDAO.getById(id).getDescription();
+        int actualCapacityPeople = locationDAO.getById(id).getCapacityPeople();
 
         assertEquals(expectedName, actualName);
         assertEquals(expectedWorkingHours, actualWorkingHours);

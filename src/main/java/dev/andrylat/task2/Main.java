@@ -91,7 +91,7 @@ public class Main {
 
         CategoryDAO categoryDAO = (CategoryDAO) context.getBean("categoryDAO");
 
-        Category categoryById = categoryDAO.getCategory(1);
+        Category categoryById = categoryDAO.getById(1);
         System.out.println(categoryById);
 //
 //        List<Category> categories = categoryDAO.getCategories();

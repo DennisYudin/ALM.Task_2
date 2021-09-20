@@ -1,6 +1,6 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
-import configs.AppConfigTest;
+import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.TicketDAO;
 import dev.andrylat.task2.entities.Ticket;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ public class TicketDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getTicket_ShouldGetTicketById_WhenInputIsId() throws ParseException {
+    public void getById_ShouldGetTicketById_WhenInputIsId() throws ParseException {
 
         long id = 3000;
 
@@ -50,12 +50,12 @@ public class TicketDAOImplTest {
         long expectedUserId = 2000;
         long expectedEventId = 1000;
 
-        String actualName = ticketDAO.getTicket(id).getEventName();
-        String actualUniqueNumber = ticketDAO.getTicket(id).getUniqueCode();
-        Date actualDate = ticketDAO.getTicket(id).getCreationDate();
-        String actualStatus = ticketDAO.getTicket(id).getStatus();
-        long actualUserId = ticketDAO.getTicket(id).getUserId();
-        long actualEventId = ticketDAO.getTicket(id).getEventId();
+        String actualName = ticketDAO.getById(id).getEventName();
+        String actualUniqueNumber = ticketDAO.getById(id).getUniqueCode();
+        Date actualDate = ticketDAO.getById(id).getCreationDate();
+        String actualStatus = ticketDAO.getById(id).getStatus();
+        long actualUserId = ticketDAO.getById(id).getUserId();
+        long actualEventId = ticketDAO.getById(id).getEventId();
 
         assertEquals(expectedName, actualName);
         assertEquals(expectedUniqueNumber, actualUniqueNumber);

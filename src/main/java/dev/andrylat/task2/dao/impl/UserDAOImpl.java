@@ -1,4 +1,4 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.dao.UserDAO;
 import dev.andrylat.task2.entities.User;
@@ -29,7 +29,7 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public User getUser(long id) {
+    public User getById(long id) {
 
         User theUser = jdbcTemplate.queryForObject(
                 SQL_SELECT_USER,

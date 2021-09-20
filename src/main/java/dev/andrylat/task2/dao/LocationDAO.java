@@ -4,11 +4,15 @@ import dev.andrylat.task2.entities.Location;
 
 import java.util.List;
 
-public interface LocationDAO {
+public interface LocationDAO extends GenericDAO<Location> {
 
-    Location getLocation(long id);
+    Location getById(long id);
+
     List<Location> findAll();
+
     void save(Location location);
+
     void update(Location location);
+
     void delete(long id);
 }

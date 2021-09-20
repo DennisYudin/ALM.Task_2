@@ -1,4 +1,4 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.dao.CategoryDAO;
 import dev.andrylat.task2.entities.Category;
@@ -28,7 +28,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     private CategoryRowMapper categoryRowMapper;
 
     @Override
-    public Category getCategory(long id) {
+    public Category getById(long id) {
 
         Category category = jdbcTemplate.queryForObject(
                 SQL_SELECT_CATEGORY,

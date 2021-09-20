@@ -1,4 +1,4 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.dao.TicketDAO;
 import dev.andrylat.task2.entities.Ticket;
@@ -30,7 +30,7 @@ public class TicketDAOImpl implements TicketDAO {
     }
 
     @Override
-    public Ticket getTicket(long id) {
+    public Ticket getById(long id) {
 
         Ticket ticket = jdbcTemplate.queryForObject(
                 SQL_SELECT_TICKET,

@@ -1,4 +1,4 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.dao.EventDAO;
 import dev.andrylat.task2.entities.Event;
@@ -30,7 +30,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
     @Override
-    public Event getEvent(long id) {
+    public Event getById(long id) {
 
         Event event = jdbcTemplate.queryForObject(
                 SQL_SELECT_EVENT,

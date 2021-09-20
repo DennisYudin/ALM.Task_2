@@ -1,6 +1,5 @@
-package configs;
+package dev.andrylat.task2.configs;
 
-import com.mchange.v2.c3p0.DriverManagerDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -9,12 +8,13 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
 
 @Configuration
 @ComponentScan(basePackages = "dev.andrylat.task2")
-@PropertySource("classpath:persistence-postgresql.properties")
+@PropertySource("classpath:test-postgresql.properties")
 public class AppConfigTest {
 
     @Autowired
@@ -30,9 +30,9 @@ public class AppConfigTest {
         String jdbcUser = propertyDataHolder.getProperty("jdbc.user.test");
         String jdbcPassword = propertyDataHolder.getProperty("jdbc.password.test");
 
-        dataSource.setDriverClass(jdbcDriver);
-        dataSource.setJdbcUrl(jdbcUrl);
-        dataSource.setUser(jdbcUser);
+        dataSource.setDriverClassName(jdbcDriver);
+        dataSource.setUrl(jdbcUrl);
+        dataSource.setUsername(jdbcUser);
         dataSource.setPassword(jdbcPassword);
 
         return dataSource;

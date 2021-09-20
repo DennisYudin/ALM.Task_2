@@ -17,11 +17,11 @@ public class DemoController {
     private CategoryDAO categoryDAO;
 
     @RequestMapping("/list")
-    public String listCategories(Model theModel) {
+    public String listCategories(Model model) {
 
-        List<Category> theCategories = categoryDAO.findAll();
+        List<Category> categories = categoryDAO.findAll();
 
-        theModel.addAttribute("categories", theCategories);
+        model.addAttribute("categories", categories);
 
         return "list-categories";
     }

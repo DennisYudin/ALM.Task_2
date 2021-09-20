@@ -1,6 +1,5 @@
 package dev.andrylat.task2.configs;
 
-import com.mchange.v2.c3p0.DriverManagerDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -8,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
@@ -43,9 +43,9 @@ public class AppConfig {
         String jdbcUser = propertyDataHolder.getProperty("jdbc.user");
         String jdbcPassword = propertyDataHolder.getProperty("jdbc.password");
 
-        dataSource.setDriverClass(jdbcDriver);
-        dataSource.setJdbcUrl(jdbcUrl);
-        dataSource.setUser(jdbcUser);
+        dataSource.setDriverClassName(jdbcDriver);
+        dataSource.setUrl(jdbcUrl);
+        dataSource.setUsername(jdbcUser);
         dataSource.setPassword(jdbcPassword);
 
         return dataSource;

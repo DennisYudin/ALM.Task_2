@@ -1,6 +1,6 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
-import configs.AppConfigTest;
+import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.CategoryDAO;
 import dev.andrylat.task2.entities.Category;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = AppConfigTest.class)
-@Sql(scripts = {"file:src/test/resources/createTables.sql",
+@Sql(scripts = {
+        "file:src/test/resources/createTables.sql",
         "file:src/test/resources/populateTables.sql"},
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
@@ -33,12 +34,12 @@ public class CategoryDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getCategory_ShouldGetCategoryById_WhenInputIsId() {
+    public void getById_ShouldGetCategoryById_WhenInputIsId() {
 
         long id = 1;
 
         String expectedName = "exhibition";
-        String actualName = categoryDAO.getCategory(id).getTitle();
+        String actualName = categoryDAO.getById(id).getTitle();
 
         assertEquals(expectedName, actualName);
     }

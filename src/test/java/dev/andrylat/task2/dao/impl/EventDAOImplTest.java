@@ -1,6 +1,6 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
-import configs.AppConfigTest;
+import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.EventDAO;
 import dev.andrylat.task2.entities.Event;
 import org.junit.jupiter.api.Test;
@@ -38,7 +38,7 @@ public class EventDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getEvent_ShouldGetEventById_WhenInputIsId() throws ParseException {
+    public void getById_ShouldGetEventById_WhenInputIsId() throws ParseException {
 
         long id = 1000;
 
@@ -49,12 +49,12 @@ public class EventDAOImplTest {
         String expectedDescription = "Oxxxymiron is";
         long expectedLocationId = 101;
 
-        String actualName = eventDAO.getEvent(id).getTitle();
-        Date actualDate = eventDAO.getEvent(id).getDate();
-        int actualPrice = eventDAO.getEvent(id).getPrice();
-        String actualStatus = eventDAO.getEvent(id).getStatus();
-        String actualDescription = eventDAO.getEvent(id).getDescription();
-        long actualLocationId = eventDAO.getEvent(id).getLocationId();
+        String actualName = eventDAO.getById(id).getTitle();
+        Date actualDate = eventDAO.getById(id).getDate();
+        int actualPrice = eventDAO.getById(id).getPrice();
+        String actualStatus = eventDAO.getById(id).getStatus();
+        String actualDescription = eventDAO.getById(id).getDescription();
+        long actualLocationId = eventDAO.getById(id).getLocationId();
 
         assertEquals(expectedName, actualName);
         assertEquals(expectedDate, actualDate);

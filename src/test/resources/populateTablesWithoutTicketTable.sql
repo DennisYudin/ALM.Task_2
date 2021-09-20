@@ -9,9 +9,9 @@ INSERT INTO locations (location_id, name, working_hours, type, address, descript
 VALUES (101, 'Moes', '06:00-00:00', 'tavern', 'the great street', 'description bla bla bla for test', 750);
 
 INSERT INTO events  (event_id, name, date, price, status, description, location_id)
-VALUES (1000, 'Oxxxymiron concert', '13-08-2021 18:23:00', 5000, 'actual', 'Oxxxymiron is', 101);
+VALUES (1000, 'Oxxxymiron concert', '2021-08-13 18:23:00', 5000, 'actual', 'Oxxxymiron is', 101);
 INSERT INTO events  (event_id, name, date, price, status, description, location_id)
-VALUES (1001, 'Basta', '14-09-2019 15:30:00', 1000, 'actual', 'Bla bla bla', 100);
+VALUES (1001, 'Basta', '2019-09-14 15:30:00', 1000, 'actual', 'Bla bla bla', 100);
 
 INSERT INTO users (user_id, name, surname, email, login, password, type)
 VALUES (2000, 'Dennis', 'Yudin', 'dennisYudin@mail.ru', 'Big boss', '0000', 'customer');

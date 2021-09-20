@@ -1,4 +1,4 @@
-package dev.andrylat.task2.implementations;
+package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.dao.LocationDAO;
 import dev.andrylat.task2.entities.Location;
@@ -29,7 +29,7 @@ public class LocationDAOImpl implements LocationDAO {
     }
 
     @Override
-    public Location getLocation(long id) {
+    public Location getById(long id) {
 
         Location location = jdbcTemplate.queryForObject(
                 SQL_SELECT_LOCATION,

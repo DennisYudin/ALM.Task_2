@@ -4,11 +4,15 @@ import dev.andrylat.task2.entities.Ticket;
 
 import java.util.List;
 
-public interface TicketDAO {
+public interface TicketDAO extends GenericDAO<Ticket>{
+
+    Ticket getById(long id);
 
     List<Ticket> findAll();
-    List<Ticket> findByTitle(String title);
-    void insert(Ticket ticket);
+
+    void save(Ticket ticket);
+
     void update(Ticket ticket);
-    void delete(long ticketId);
+
+    void delete(long id);
 }

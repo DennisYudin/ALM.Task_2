@@ -4,11 +4,15 @@ import dev.andrylat.task2.entities.User;
 
 import java.util.List;
 
-public interface UserDAO {
+public interface UserDAO extends GenericDAO<User>{
+
+    User getById(long id);
 
     List<User> findAll();
-    List<User> findByName(String name);
-    void insert(User user);
+
+    void save(User user);
+
     void update(User user);
-    void delete(long userId);
+
+    void delete(long id);
 }

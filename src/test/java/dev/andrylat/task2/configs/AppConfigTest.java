@@ -7,41 +7,28 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.web.servlet.ViewResolver;
-import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 import javax.sql.DataSource;
 
 @Configuration
-//@EnableWebMvc
 @ComponentScan(basePackages = "dev.andrylat.task2")
-@PropertySource("classpath:persistence-postgresql.properties")
-public class AppConfig {
+@PropertySource("classpath:test-postgresql.properties")
+public class AppConfigTest {
 
     @Autowired
     private Environment propertyDataHolder;
-
-    @Bean
-    public ViewResolver viewResolver() {
-
-        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
-
-        viewResolver.setPrefix("/WEB-INF/views/");
-        viewResolver.setSuffix(".jsp");
-
-        return viewResolver;
-    }
 
     @Bean
     public DataSource dataSource() {
 
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
 
-        String jdbcDriver = propertyDataHolder.getProperty("jdbc.driver");
-        String jdbcUrl = propertyDataHolder.getProperty("jdbc.url");
-        String jdbcUser = propertyDataHolder.getProperty("jdbc.user");
-        String jdbcPassword = propertyDataHolder.getProperty("jdbc.password");
+        String jdbcDriver = propertyDataHolder.getProperty("jdbc.driver.test");
+        String jdbcUrl = propertyDataHolder.getProperty("jdbc.url.test");
+        String jdbcUser = propertyDataHolder.getProperty("jdbc.user.test");
+        String jdbcPassword = propertyDataHolder.getProperty("jdbc.password.test");
 
         dataSource.setDriverClassName(jdbcDriver);
         dataSource.setUrl(jdbcUrl);
@@ -57,6 +44,15 @@ public class AppConfig {
         JdbcTemplate JdbcTemplate = new JdbcTemplate(dataSource());
 
         return JdbcTemplate;
+    }
+
+    @Bean
+    public DataSourceTransactionManager transactionManager() {
+
+        DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
+        transactionManager.setDataSource(dataSource());
+
+        return transactionManager;
     }
 }
 

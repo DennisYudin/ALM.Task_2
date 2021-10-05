@@ -4,11 +4,17 @@ import dev.andrylat.task2.entities.Event;
 
 import java.util.List;
 
-public interface EventDAO {
+public interface EventDAO extends GenericDAO<Event>{
+
+    Event getById(long id);
 
     List<Event> findAll();
-    List<Event> findByTitle(String title);
-    void insert(Event event);
+
+    void save(Event event);
+
     void update(Event event);
-    void delete(long eventId);
+
+    void delete(long id);
 }
+
+

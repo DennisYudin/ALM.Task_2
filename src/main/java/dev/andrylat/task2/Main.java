@@ -85,7 +85,7 @@ public class Main {
 ////
 ////        userDAO.updateUser(userUpdate);
 ////        userDAO.deleteUser(13);
-//
+
         AnnotationConfigApplicationContext context =
                 new AnnotationConfigApplicationContext(AppConfig.class);
 
@@ -93,7 +93,7 @@ public class Main {
 
         Category categoryById = categoryDAO.getById(1);
         System.out.println(categoryById);
-//
+
 //        List<Category> categories = categoryDAO.getCategories();
 //
 //        for (Category category:categories) {

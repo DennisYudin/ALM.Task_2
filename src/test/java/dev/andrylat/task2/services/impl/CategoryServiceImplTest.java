@@ -1,8 +1,9 @@
-package dev.andrylat.task2.dao.impl;
+package dev.andrylat.task2.services.impl;
 
 import dev.andrylat.task2.configs.AppConfigTest;
-import dev.andrylat.task2.dao.CategoryDAO;
 import dev.andrylat.task2.entities.Category;
+import dev.andrylat.task2.exceptions.ServiceException;
+import dev.andrylat.task2.services.CategoryService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,31 +28,44 @@ import static org.junit.jupiter.api.Assertions.*;
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class CategoryDAOImplTest {
+class CategoryServiceImplTest {
     private static final String SQL_SELECT_CATEGORY_ID = "SELECT category_id FROM categories WHERE name = ?";
     private static final String SQL_SELECT_ALL_CATEGORIES_ID = "SELECT category_id FROM categories";
 
     @Autowired
-    private CategoryDAO categoryDAO;
+    private CategoryService categoryService;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldGetCategoryById_WhenInputIsId() {
+    void getCategoryById_ShouldGetCategoryById_WhenInputIsId() {
 
         Category expectedCategory = getCategory(1, "exhibition");
-        Category actualCategory = categoryDAO.getById(1);
+        Category actualCategory = categoryService.getCategoryById(1);
 
         assertEquals(expectedCategory, actualCategory);
     }
 
     @Test
-    public void findAll_ShouldGetAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSort() {
+    void getCategoryById_ShouldThrowServiceException_WhenInputIsZero() {
+
+        Throwable exception = assertThrows(ServiceException.class,
+                () -> categoryService.getCategoryById(0));
+
+        String expected = "Could not get category by id = 0";
+        String actual = exception.getMessage();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void findAllCategories_ShouldGetAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 4);
 
-        List<Category> actualCategories = categoryDAO.findAll(sortedByName);
+        List<Category> actualCategories = categoryService.findAllCategories(sortedByName);
+
         List<String> expectedCategoryNames = new ArrayList<>();
 
         expectedCategoryNames.add("Art concert");
@@ -68,13 +82,12 @@ public class CategoryDAOImplTest {
         }
     }
 
-
     @Test
-    public void findAll_ShouldGetTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSort() {
+    public void findAllCategories_ShouldGetTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
-        List<Category> actualCategoryNames = categoryDAO.findAll(sortedByName);
+        List<Category> actualCategoryNames = categoryService.findAllCategories(sortedByName);
         List<String> expectedCategoryNames = new ArrayList<>();
 
         expectedCategoryNames.add("Art concert");
@@ -90,11 +103,11 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
+    public void findAllCategories_ShouldGetAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
 
         Pageable sortedById = PageRequest.of(0, 4, Sort.by("category_id"));
 
-        List<Category> actualCategoryIDs = categoryDAO.findAll(sortedById);
+        List<Category> actualCategoryIDs = categoryService.findAllCategories(sortedById);
         List<Integer> expectedCategoryIDs = new ArrayList<>();
 
         expectedCategoryIDs.add(1);
@@ -111,11 +124,11 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllCategoriesSortedByName_WhenPageIsNull() {
+    public void findAllCategories_ShouldGetAllCategoriesSortedByName_WhenPageIsNull() {
 
         Pageable page = null;
 
-        List<Category> actualCategoryNames = categoryDAO.findAll(page);
+        List<Category> actualCategoryNames = categoryService.findAllCategories(page);
         List<String> expectedCategoryNames = new ArrayList<>();
 
         expectedCategoryNames.add("Art concert");
@@ -132,12 +145,13 @@ public class CategoryDAOImplTest {
         }
     }
 
+
     @Test
-    public void save_ShouldSaveCategory_WhenInputIsCategoryObjectWithIdAndName() {
+    void saveCategory_ShouldSaveCategory_WhenInputIsNewCategoryWithIdAndName() {
 
         Category newCategory = getCategory(5, "opera");
 
-        categoryDAO.save(newCategory);
+        categoryService.saveCategory(newCategory);
 
         String checkName = "opera";
 
@@ -151,41 +165,7 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void update_ShouldUpdateExistedCategory_WhenInputIsCategoryObjectWithIdAndName() {
-
-        Category updatedCategory = getCategory(1, "opera");
-
-        categoryDAO.update(updatedCategory);
-
-        String checkName = "opera";
-
-        int expectedId = 1;
-        Integer actualId = jdbcTemplate.queryForObject(
-                SQL_SELECT_CATEGORY_ID,
-                new Object[]{checkName},
-                Integer.class
-        );
-        assertEquals(expectedId, actualId);
-    }
-
-    @Test
-    public void delete_ShouldDeleteCategoryById_WhenInputIsId() {
-
-        long categoryId = 1;
-
-        categoryDAO.delete(categoryId);
-
-        List<Long> actualId = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_CATEGORIES_ID,
-                Long.class
-        );
-        int expectedSize = 3;
-        int actualSize = actualId.size();
-
-        int checkedId = 1;
-
-        assertEquals(expectedSize, actualSize);
-        assertFalse(actualId.contains(checkedId));
+    void deleteCategoryById() {
     }
 
     private Category getCategory(long id, String title) {

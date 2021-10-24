@@ -4,6 +4,8 @@ import dev.andrylat.task2.dao.LocationDAO;
 import dev.andrylat.task2.entities.Location;
 import dev.andrylat.task2.mappers.LocationRowMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -11,15 +13,20 @@ import java.util.List;
 
 @Repository("locationDAO")
 public class LocationDAOImpl implements LocationDAO {
-    private static final String SQL_SELECT_LOCATION = "SELECT * FROM locations WHERE location_id = ?";
-    private static final String SQL_SELECT_ALL_LOCATIONS = "SELECT * FROM locations ORDER BY name";
-    private static final String SQL_SAVE_LOCATION = "INSERT INTO locations " +
+    private static final String SQL_SELECT_LOCATION_BY_ID = "SELECT * FROM locations WHERE location_id = ?";
+    private static final String SQL_SELECT_ALL_LOCATIONS = "SELECT * FROM locations";
+    private static final String SQL_SELECT_ALL_LOCATIONS_ORDER_BY_NAME = "SELECT * FROM locations ORDER BY name";
+    private static final String SQL_SAVE_LOCATION = "" +
+            "INSERT INTO locations " +
             "(location_id, name, working_hours, type, address, description, capacity_people)" +
             "VALUES (?, ?, ?, ?, ?, ?, ?)";
-    private static final String SQL_UPDATE_LOCATION = "UPDATE locations " +
+    private static final String SQL_UPDATE_LOCATION = "" +
+            "UPDATE locations " +
             "SET name = ?, working_hours = ?, type = ?, address = ?, description = ?, capacity_people = ? " +
             "WHERE location_id = ?";
-    private static final String SQL_DELETE_LOCATION = "DELETE FROM locations WHERE location_id = ?";
+    private static final String SQL_DELETE_LOCATION = "" +
+            "DELETE FROM locations " +
+            "WHERE location_id = ?";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -35,7 +42,7 @@ public class LocationDAOImpl implements LocationDAO {
     public Location getById(long id) {
 
         Location location = jdbcTemplate.queryForObject(
-                SQL_SELECT_LOCATION,
+                SQL_SELECT_LOCATION_BY_ID,
                 locationRowMapper,
                 new Object[]{id}
         );
@@ -43,13 +50,44 @@ public class LocationDAOImpl implements LocationDAO {
     }
 
     @Override
-    public List<Location> findAll() {
+    public List<Location> findAll(Pageable page) {
+
+        String sqlQuery;
+        if (page != null) {
+            sqlQuery = getSqlQuery(page);
+        } else {
+            sqlQuery = SQL_SELECT_ALL_LOCATIONS_ORDER_BY_NAME;
+        }
 
         List<Location> locations = jdbcTemplate.query(
-                SQL_SELECT_ALL_LOCATIONS,
+                sqlQuery,
                 locationRowMapper
         );
         return locations;
+    }
+
+    private String getSqlQuery(Pageable pageable) {
+        String query;
+        if (pageable.getSort().isEmpty()) {
+            Sort.Order order = Sort.Order.by("name");
+
+            query = collectSqlQuery(pageable, order);
+        } else {
+            Sort.Order order = pageable.getSort().toList().get(0);
+
+            query = collectSqlQuery(pageable, order);
+        }
+        return query;
+    }
+
+    private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
+
+        String query = SQL_SELECT_ALL_LOCATIONS
+                + " ORDER BY " + sort.getProperty() + " " + sort.getDirection().name()
+                + " LIMIT " + pageable.getPageSize()
+                + " OFFSET " + pageable.getOffset();
+
+        return query;
     }
 
     @Override

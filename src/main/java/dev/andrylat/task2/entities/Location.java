@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class Location {
-
     private long id;
     private String title;
     private String workingHours;

@@ -4,6 +4,8 @@ import dev.andrylat.task2.dao.CategoryDAO;
 import dev.andrylat.task2.entities.Category;
 import dev.andrylat.task2.mappers.CategoryRowMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -11,8 +13,9 @@ import java.util.List;
 
 @Repository("categoryDAO")
 public class CategoryDAOImpl implements CategoryDAO {
-    private static final String SQL_SELECT_CATEGORY = "SELECT * FROM categories WHERE category_id = ?";
-    private static final String SQL_SELECT_ALL_CATEGORIES = "SELECT * FROM categories ORDER BY name";
+    private static final String SQL_SELECT_CATEGORY_BY_ID = "SELECT * FROM categories WHERE category_id = ?";
+    private static final String SQL_SELECT_ALL_CATEGORIES = "SELECT * FROM categories";
+    private static final String SQL_SELECT_ALL_CATEGORIES_ORDER_BY_NAME = "SELECT * FROM categories ORDER BY name";
     private static final String SQL_SAVE_CATEGORY = "INSERT INTO categories (category_id, name) VALUES (?, ?)";
     private static final String SQL_UPDATE_CATEGORY = "UPDATE categories SET name = ? WHERE category_id = ?";
     private static final String SQL_DELETE_CATEGORY = "DELETE FROM categories WHERE category_id = ?";
@@ -31,7 +34,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     public Category getById(long id) {
 
         Category category = jdbcTemplate.queryForObject(
-                SQL_SELECT_CATEGORY,
+                SQL_SELECT_CATEGORY_BY_ID,
                 categoryRowMapper,
                 new Object[]{id}
         );
@@ -39,13 +42,44 @@ public class CategoryDAOImpl implements CategoryDAO {
     }
 
     @Override
-    public List<Category> findAll() {
+    public List<Category> findAll(Pageable page) {
+
+        String sqlQuery;
+        if (page != null) {
+            sqlQuery = getSqlQuery(page);
+        } else {
+            sqlQuery = SQL_SELECT_ALL_CATEGORIES_ORDER_BY_NAME;
+        }
 
         List<Category> categories = jdbcTemplate.query(
-                SQL_SELECT_ALL_CATEGORIES,
+                sqlQuery,
                 categoryRowMapper
         );
         return categories;
+    }
+
+    private String getSqlQuery(Pageable pageable) {
+        String query;
+        if (pageable.getSort().isEmpty()) {
+            Sort.Order order = Sort.Order.by("name");
+
+            query = collectSqlQuery(pageable, order);
+        } else {
+            Sort.Order order = pageable.getSort().toList().get(0);
+
+            query = collectSqlQuery(pageable, order);
+        }
+        return query;
+    }
+
+    private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
+
+        String query = SQL_SELECT_ALL_CATEGORIES
+                + " ORDER BY " + sort.getProperty() + " " + sort.getDirection().name()
+                + " LIMIT " + pageable.getPageSize()
+                + " OFFSET " + pageable.getOffset();
+
+        return query;
     }
 
     @Override
@@ -80,18 +114,6 @@ public class CategoryDAOImpl implements CategoryDAO {
                 id
         );
     }
-
-//    @Override Для ближайшего будущего
-//    public Page<Category> sortByName(Pageable page) {
-//        String sql = "SELECT * FROM categories ORDER BY ?";
-//
-//        Sort.Order order = !page.getSort().isEmpty() ? page.getSort().toList().get(0) : Sort.Order.by("name");
-//
-//        List<Category> categories = jdbcTemplate.query(
-//                sql,
-//                new Object[]{order.getDirection().name()},
-//                new CategoryRowMapper()
-//        );
-//        return new PageImpl<Category>(categories, page, 10);
-//    }
 }
+
+

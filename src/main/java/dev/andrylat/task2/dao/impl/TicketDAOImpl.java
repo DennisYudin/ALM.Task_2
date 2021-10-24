@@ -4,6 +4,8 @@ import dev.andrylat.task2.dao.TicketDAO;
 import dev.andrylat.task2.entities.Ticket;
 import dev.andrylat.task2.mappers.TicketRowMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -12,12 +14,17 @@ import java.util.List;
 
 @Repository("ticketDAO")
 public class TicketDAOImpl implements TicketDAO {
-    private static final String SQL_SELECT_TICKET = "SELECT * FROM tickets WHERE ticket_id = ?";
+    private static final String SQL_SELECT_TICKET_BY_ID = "SELECT * FROM tickets WHERE ticket_id = ?";
     private static final String SQL_SELECT_ALL_TICKETS = "SELECT * FROM tickets";
-    private static final String SQL_SAVE_TICKET = "INSERT INTO tickets " +
+    private static final String SQL_SELECT_ALL_TICKETS_ORDER_BY_EVENT_NAME = "" +
+            "SELECT * FROM tickets " +
+            "ORDER BY event_name";
+    private static final String SQL_SAVE_TICKET = "" +
+            "INSERT INTO tickets " +
             "(ticket_id, event_name, unique_number, creation_date, status, user_id, event_id)" +
             "VALUES (?, ?, ?, ?, ?, ?, ?)";
-    private static final String SQL_UPDATE_TICKET = "UPDATE tickets " +
+    private static final String SQL_UPDATE_TICKET = "" +
+            "UPDATE tickets " +
             "SET event_name = ?, unique_number = ?, creation_date = ?, status = ?, user_id = ?, event_id = ? " +
             "WHERE ticket_id = ?";
     private static final String SQL_DELETE_TICKET = "DELETE FROM tickets WHERE ticket_id = ?";
@@ -36,7 +43,7 @@ public class TicketDAOImpl implements TicketDAO {
     public Ticket getById(long id) {
 
         Ticket ticket = jdbcTemplate.queryForObject(
-                SQL_SELECT_TICKET,
+                SQL_SELECT_TICKET_BY_ID,
                 ticketRowMapper,
                 new Object[]{id}
         );
@@ -44,13 +51,43 @@ public class TicketDAOImpl implements TicketDAO {
     }
 
     @Override
-    public List<Ticket> findAll() {
+    public List<Ticket> findAll(Pageable page) {
 
+        String sqlQuery;
+        if (page != null) {
+            sqlQuery = getSqlQuery(page);
+        } else {
+            sqlQuery = SQL_SELECT_ALL_TICKETS_ORDER_BY_EVENT_NAME;
+        }
         List<Ticket> tickets = jdbcTemplate.query(
-                SQL_SELECT_ALL_TICKETS,
+                sqlQuery,
                 ticketRowMapper
         );
         return tickets;
+    }
+
+    private String getSqlQuery(Pageable pageable) {
+        String query;
+        if (pageable.getSort().isEmpty()) {
+            Sort.Order order = Sort.Order.by("event_name");
+
+            query = collectSqlQuery(pageable, order);
+        } else {
+            Sort.Order order = pageable.getSort().toList().get(0);
+
+            query = collectSqlQuery(pageable, order);
+        }
+        return query;
+    }
+
+    private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
+
+        String query = SQL_SELECT_ALL_TICKETS
+                + " ORDER BY " + sort.getProperty() + " " + sort.getDirection().name()
+                + " LIMIT " + pageable.getPageSize()
+                + " OFFSET " + pageable.getOffset();
+
+        return query;
     }
 
     @Override

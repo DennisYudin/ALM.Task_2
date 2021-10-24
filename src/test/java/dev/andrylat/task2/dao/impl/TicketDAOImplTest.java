@@ -6,6 +6,9 @@ import dev.andrylat.task2.entities.Ticket;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -13,20 +16,24 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = AppConfigTest.class)
-@Sql(scripts = {"file:src/test/resources/createTables.sql",
+@Sql(scripts = {
+        "file:src/test/resources/createTables.sql",
         "file:src/test/resources/populateTables.sql"},
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class TicketDAOImplTest {
-    private static final String SQL_SELECT_TICKET_ID = "SELECT ticket_id " +
+    private static final String SQL_SELECT_TICKET_ID = "" +
+            "SELECT ticket_id " +
             "FROM tickets " +
             "WHERE event_name = ? AND unique_number = ? AND creation_date = ? " +
             "AND status = ? AND user_id = ? AND event_id = ?";
@@ -41,47 +48,139 @@ public class TicketDAOImplTest {
     @Test
     public void getById_ShouldGetTicketById_WhenInputIsId() throws ParseException {
 
-        long id = 3000;
+        Date date = getDate("17-02-1992 20:45:00");
+        Ticket expectedTicket = getTicket(
+                3000, "Oxxxymiron concert",
+                "123456789", date,
+                "actual", 2000, 1000);
 
-        String expectedName = "Oxxxymiron concert";
-        String expectedUniqueNumber = "123456789";
-        Date expectedDate = getDate("17-02-1992 20:45:00");
-        String expectedStatus = "actual";
-        long expectedUserId = 2000;
-        long expectedEventId = 1000;
+        Ticket actualTicket = ticketDAO.getById(3000);
 
-        String actualName = ticketDAO.getById(id).getEventName();
-        String actualUniqueNumber = ticketDAO.getById(id).getUniqueCode();
-        Date actualDate = ticketDAO.getById(id).getCreationDate();
-        String actualStatus = ticketDAO.getById(id).getStatus();
-        long actualUserId = ticketDAO.getById(id).getUserId();
-        long actualEventId = ticketDAO.getById(id).getEventId();
-
-        assertEquals(expectedName, actualName);
-        assertEquals(expectedUniqueNumber, actualUniqueNumber);
-        assertEquals(expectedDate, actualDate);
-        assertEquals(expectedStatus, actualStatus);
-        assertEquals(expectedUserId, actualUserId);
-        assertEquals(expectedEventId, actualEventId);
+        assertEquals(expectedTicket, actualTicket);
     }
 
     @Test
-    public void findAll_ShouldGetAllTickets_WhenCallMethod() throws ParseException {
+    public void findAll_ShouldGetAllTicketsSortedByEventName_WhenInputIsPageRequestWithoutSortValue()
+            throws ParseException {
 
-        List<Ticket> actualTickets = ticketDAO.findAll();
-        List<Long> expectedId = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_TICKETS_ID,
-                Long.class
-        );
-        int expectedSize = expectedId.size();
-        int actualSize = actualTickets.size();
+        Pageable sortedByName = PageRequest.of(0, 2);
 
-        assertEquals(expectedSize, actualSize);
+        List<Ticket> actualTickets = ticketDAO.findAll(sortedByName);
+        List<Ticket> expectedTickets = new ArrayList<>();
 
-        for (Ticket ticket : actualTickets) {
-            long actualTicketId = ticket.getId();
+        Date firstCreationDate = getDate("17-02-1992 20:45:00");
+        Ticket firstTicket = getTicket(
+                3000, "Oxxxymiron concert",
+                "123456789", firstCreationDate,
+                "actual", 2000, 1000);
 
-            assertTrue(expectedId.contains(actualTicketId));
+        Date secondCreationDate = getDate("18-02-1986 02:30:00");
+        Ticket secondTicket = getTicket(
+                3001, "Basta",
+                "987654321", secondCreationDate,
+                "cancelled", 2001, 1001);
+
+        expectedTickets.add(secondTicket);
+        expectedTickets.add(firstTicket);
+
+        for (int i = 0; i < actualTickets.size(); i++) {
+
+            Ticket actualTicket = actualTickets.get(i);
+            Ticket expectedTicket = expectedTickets.get(i);
+
+            assertEquals(expectedTicket, actualTicket);
+        }
+    }
+
+    @Test
+    public void findAll_ShouldGetAllTicketsSortedByEventName_WhenPageIsNull()
+            throws ParseException {
+
+        Pageable page = null;
+
+        List<Ticket> actualTickets = ticketDAO.findAll(page);
+        List<Ticket> expectedTickets = new ArrayList<>();
+
+        Date firstCreationDate = getDate("17-02-1992 20:45:00");
+        Ticket firstTicket = getTicket(
+                3000, "Oxxxymiron concert",
+                "123456789", firstCreationDate,
+                "actual", 2000, 1000);
+
+        Date secondCreationDate = getDate("18-02-1986 02:30:00");
+        Ticket secondTicket = getTicket(
+                3001, "Basta",
+                "987654321", secondCreationDate,
+                "cancelled", 2001, 1001);
+
+        expectedTickets.add(secondTicket);
+        expectedTickets.add(firstTicket);
+
+        for (int i = 0; i < actualTickets.size(); i++) {
+
+            Ticket actualTicket = actualTickets.get(i);
+            Ticket expectedTicket = expectedTickets.get(i);
+
+            assertEquals(expectedTicket, actualTicket);
+        }
+    }
+
+    @Test
+    public void findAll_ShouldGetAllTicketsSortedByEventName_WhenInputIsPageRequestWithSortValue()
+            throws ParseException {
+
+        Pageable sortedByName = PageRequest.of(0, 2, Sort.by("ticket_id"));
+
+        List<Ticket> actualTickets = ticketDAO.findAll(sortedByName);
+        List<Ticket> expectedTickets = new ArrayList<>();
+
+        Date firstCreationDate = getDate("17-02-1992 20:45:00");
+        Ticket firstTicket = getTicket(
+                3000, "Oxxxymiron concert",
+                "123456789", firstCreationDate,
+                "actual", 2000, 1000);
+
+        Date secondCreationDate = getDate("18-02-1986 02:30:00");
+        Ticket secondTicket = getTicket(
+                3001, "Basta",
+                "987654321", secondCreationDate,
+                "cancelled", 2001, 1001);
+
+        expectedTickets.add(firstTicket);
+        expectedTickets.add(secondTicket);
+
+        for (int i = 0; i < actualTickets.size(); i++) {
+
+            Ticket actualTicket = actualTickets.get(i);
+            Ticket expectedTicket = expectedTickets.get(i);
+
+            assertEquals(expectedTicket, actualTicket);
+        }
+    }
+
+    @Test
+    public void findAll_ShouldGetAllTicketsSortedByEventName_WhenInputIsPageWithSizeOne()
+            throws ParseException {
+
+        Pageable sortedByName = PageRequest.of(0, 1);
+
+        List<Ticket> actualTickets = ticketDAO.findAll(sortedByName);
+        List<Ticket> expectedTickets = new ArrayList<>();
+
+        Date secondCreationDate = getDate("18-02-1986 02:30:00");
+        Ticket secondTicket = getTicket(
+                3001, "Basta",
+                "987654321", secondCreationDate,
+                "cancelled", 2001, 1001);
+
+        expectedTickets.add(secondTicket);
+
+        for (int i = 0; i < actualTickets.size(); i++) {
+
+            Ticket actualTicket = actualTickets.get(i);
+            Ticket expectedTicket = expectedTickets.get(i);
+
+            assertEquals(expectedTicket, actualTicket);
         }
     }
 
@@ -146,7 +245,7 @@ public class TicketDAOImplTest {
     }
 
     @Test
-    public void delete_ShouldDeleteTicketById_WhenInputIsId() throws ParseException {
+    public void delete_ShouldDeleteTicketById_WhenInputIsId() {
 
         long ticketId = 3000;
 
@@ -159,7 +258,7 @@ public class TicketDAOImplTest {
         int expectedSize = 1;
         int actualSize = actualId.size();
 
-        int checkedId = 3000;
+        long checkedId = 3000;
 
         assertEquals(expectedSize, actualSize);
         assertFalse(actualId.contains(checkedId));
@@ -181,10 +280,10 @@ public class TicketDAOImplTest {
     }
 
     private Date getDate(String date) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat(
-                "dd-M-yyyy hh:mm:ss");
-        String dateInString = date;
-        Date convertedDate = sdf.parse(dateInString);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
+
+        Date convertedDate = simpleDateFormat.parse(date);
+
         return convertedDate;
     }
 }

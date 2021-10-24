@@ -19,9 +19,9 @@ public class DemoController {
     @RequestMapping("/list")
     public String listCategories(Model model) {
 
-        List<Category> categories = categoryDAO.findAll();
+//        List<Category> categories = categoryDAO.findAll();
 
-        model.addAttribute("categories", categories);
+//        model.addAttribute("categories", categories);
 
         return "list-categories";
     }

@@ -1,40 +1,26 @@
 package dev.andrylat.task2.services;
 
-import dev.andrylat.task2.entities.Category;
+import dev.andrylat.task2.dto.EventDTO;
 import dev.andrylat.task2.entities.Event;
-import dev.andrylat.task2.entities.Location;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface EventService {
 
-    Category getCategoryById(long id);
-
-    List<Category> findAllCategories();
-
-    void saveCategory(Category category);
-
-    void updateCategory(Category category);
-
-    void deleteCategoryById(long id);
-
     Event getEventById(long id);
 
-    List<Event> findAllEvents();
+    List<Event> findAllEvents(Pageable pageable);
 
     void saveEvent(Event event);
 
-    void updateEvent(Event event);
-
     void deleteEventById(long id);
 
-    Location getLocationById(long id);
+    List<Long> getAllCategoriesByEventId(long id);
 
-    List<Location> findAllLocations();
+    void addNewCategory(long firstId, long secondId);
 
-    void saveLocation(Location location);
+    void removeCategory(long firstId, long secondId);
 
-    void updateLocation(Location location);
-
-    void deleteLocationById(long id);
+    EventDTO getEventWithDetails(long id);
 }

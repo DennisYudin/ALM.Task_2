@@ -1,18 +1,26 @@
 package dev.andrylat.task2.services;
 
+import dev.andrylat.task2.dto.UserDTO;
 import dev.andrylat.task2.entities.User;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface UserService {
 
-    User getById(long id);
+    User getUserById(long id);
 
-    List<User> findAll();
+    List<User> findAllUsers(Pageable pageable);
 
-    void save(User user);
+    void saveUser(User user);
 
-    void update(User user);
+    void deleteUserById(long id);
 
-    void delete(long id);
+    List<Long> getAllEventsByUserId(long id);
+
+    void addNewEvent(long firstId, long secondId);
+
+    void removeEvent(long firstId, long secondId);
+
+    UserDTO getUserWithDetails(long id);
 }

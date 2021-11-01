@@ -2,7 +2,9 @@ package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.UserDAO;
+import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.entities.User;
+import dev.andrylat.task2.exceptions.DataNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +16,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,7 +55,7 @@ public class UserDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldGetUserById_WhenInputIsId() {
+    void getById_ShouldReturnUserById_WhenInputIsId() {
 
         User expectedUser = getUser(
                 2000, "Dennis", "Yudin",
@@ -62,7 +68,19 @@ public class UserDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllUsersSortedByName_WhenInputIsPageRequestWithoutSort() {
+    void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
+
+        Throwable exception = assertThrows(DataNotFoundException.class,
+                () -> userDAO.getById(-1));
+
+        String expected = "There is no such user with id = -1";
+        String actual = exception.getMessage();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void findAll_ShouldReturnAllUsersSortedByName_WhenInputIsPageRequestWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -92,7 +110,7 @@ public class UserDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetOneUsersSortedByName_WhenInputIsPageWithSizeOne() {
+    void findAll_ShouldReturnOneUsersSortedByName_WhenInputIsPageWithSizeOne() {
 
         Pageable sortedByName = PageRequest.of(0, 1);
 
@@ -116,7 +134,7 @@ public class UserDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllUsersSortedBySurname_WhenInputIsPageRequestWithSortValue() {
+    void findAll_ShouldReturnAllUsersSortedBySurname_WhenInputIsPageRequestWithSortValue() {
 
         Pageable sortedBySurname = PageRequest.of(0, 2, Sort.by("surname"));
 
@@ -146,7 +164,7 @@ public class UserDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllUsersSortedByName_WhenPageIsNull() {
+    void findAll_ShouldReturnAllUsersSortedByName_WhenPageIsNull() {
 
         Pageable page = null;
 
@@ -176,7 +194,7 @@ public class UserDAOImplTest {
     }
 
     @Test
-    public void save_ShouldSaveNewUser_WhenInputIsUserObjectWithDetails() {
+    void save_ShouldSaveNewUser_WhenInputIsUserObjectWithDetails() {
 
         User newUser = getUser(
                 2002, "Vandam",
@@ -197,15 +215,15 @@ public class UserDAOImplTest {
         long expectedId = 2002;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_USER_ID,
-                new Object[]{checkName, checkSurname, checkEmail,
-                        checkLogin, checkPassword, checkType},
-                Long.class
+                Long.class,
+                checkName, checkSurname, checkEmail,
+                checkLogin, checkPassword, checkType
         );
         assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void update_ShouldUpdateExistedUser_WhenInputIsUserObjectWithDetails() {
+    void update_ShouldUpdateExistedUser_WhenInputIsUserObjectWithDetails() {
 
         User updatedUser = getUser(
                 2000, "Oleg",
@@ -226,15 +244,15 @@ public class UserDAOImplTest {
         long expectedId = 2000;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_USER_ID,
-                new Object[]{checkName, checkSurname, checkEmail,
-                        checkLogin, checkPassword, checkType},
-                Long.class
+                Long.class,
+                checkName, checkSurname, checkEmail,
+                checkLogin, checkPassword, checkType
         );
         assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void delete_ShouldDeleteUserById_WhenInputIsId() {
+    void delete_ShouldDeleteUserById_WhenInputIsId() {
 
         long userId = 2000;
 
@@ -254,26 +272,22 @@ public class UserDAOImplTest {
     }
 
     @Test
-    public void getAllEventsByUserId_ShouldReturnAllEventsId_WhenInputIsUserId() {
+    void getAllEventsByUserId_ShouldReturnAllEvents_WhenInputIsUserId() {
 
-        long id = 2000;
+        long id = 2001;
 
-        List<Long> actualEventIDs = userDAO.getAllEventsByUserId(id);
-        List<Long> expectedEventIDs = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_EVENTS_BY_USER_ID,
-                new Object[]{id},
-                Long.class
-        );
+        List<String> actualEvents = userDAO.getAllEventsByUserId(id);
+        List<String> expectedEvents = new ArrayList<>(Arrays.asList("Oxxxymiron concert"));
 
-        int expectedSize = expectedEventIDs.size();
-        int actualSize = actualEventIDs.size();
+        int expectedSize = expectedEvents.size();
+        int actualSize = actualEvents.size();
 
         assertEquals(expectedSize, actualSize);
-        assertTrue(expectedEventIDs.containsAll(actualEventIDs));
+        assertTrue(expectedEvents.containsAll(actualEvents));
     }
 
     @Test
-    public void addNewEvent_ShouldAddNewEvent_WhenInputIsUserIdAndEventId() {
+    void addNewEvent_ShouldAddNewEvent_WhenInputIsUserIdAndEventId() {
 
         long userId = 2001;
         long eventId = 1001;
@@ -286,14 +300,14 @@ public class UserDAOImplTest {
         long expectedId = 1001;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_EVENT_ID_BY_USER_ID_AND_EVENT_ID,
-                new Object[]{checkUserId, checkEventId},
-                Long.class
+                Long.class,
+                checkUserId, checkEventId
         );
         assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void removeEvent_ShouldDeleteEvent_WhenInputIsUserIdIdAndEventId() {
+    void removeEvent_ShouldDeleteEvent_WhenInputIsUserIdIdAndEventId() {
 
         long userId = 2000;
         long eventId = 1000;
@@ -302,8 +316,8 @@ public class UserDAOImplTest {
 
         List<Long> actualEventIDs = jdbcTemplate.queryForList(
                 SQL_SELECT_ALL_EVENTS_BY_USER_ID,
-                new Object[]{userId},
-                Long.class
+                Long.class,
+                userId
         );
         int expectedSize = 1;
         int actualSize = actualEventIDs.size();

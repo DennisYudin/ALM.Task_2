@@ -2,19 +2,24 @@ package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.dao.UserDAO;
 import dev.andrylat.task2.entities.User;
+import dev.andrylat.task2.exceptions.DAOException;
+import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.mappers.UserRowMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository("userDAO")
 public class UserDAOImpl implements UserDAO {
     private static final String SQL_SELECT_USER_BY_ID = "SELECT * FROM users WHERE user_id = ?";
-    private static final String SQL_SELECT_ALL_USERS = "SELECT * FROM users";
+    private static final String SQL_SELECT_ALL_USERS_ORDER_BY = "SELECT * FROM users ORDER BY";
     private static final String SQL_SELECT_ALL_USERS_ORDER_BY_NAME = "SELECT * FROM users ORDER BY name";
     private static final String SQL_SAVE_USER = "" +
             "INSERT INTO users " +
@@ -37,6 +42,8 @@ public class UserDAOImpl implements UserDAO {
             "DELETE " +
             "FROM event_subscriptions " +
             "WHERE user_id = ? AND event_id = ?";
+    private static final String SQL_SELECT_EVENT_NAME_BY_ID = "SELECT name FROM events WHERE event_id = ?";
+    private static final String SORT_BY_COLUMN = "name";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -51,39 +58,67 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public User getById(long id) {
 
-        User theUser = jdbcTemplate.queryForObject(
+        User user;
+        try {
+            user = getUser(id);
+        } catch (EmptyResultDataAccessException ex) {
+            throw new DataNotFoundException(
+                    "There is no such user with id = " + id, ex);
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong when trying to call the method getById()", ex);
+        }
+        return user;
+    }
+
+    private User getUser(long id) {
+        User user = jdbcTemplate.queryForObject(
                 SQL_SELECT_USER_BY_ID,
                 userRowMapper,
-                new Object[]{id}
+                id
         );
-        return theUser;
+        return user;
     }
 
     @Override
     public List<User> findAll(Pageable page) {
 
-        String sqlQuery;
-        if (page != null) {
-            sqlQuery = getSqlQuery(page);
-        } else {
-            sqlQuery = SQL_SELECT_ALL_USERS_ORDER_BY_NAME;
-        }
+        String sqlQuery = getSqlQuery(page);
 
+        List<User> users;
+        try {
+            users = getUsers(sqlQuery);
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong when trying to call the method findAll()", ex);
+        }
+        return users;
+    }
+
+    private List<User> getUsers(String query) {
         List<User> users = jdbcTemplate.query(
-                sqlQuery,
+                query,
                 userRowMapper
         );
         return users;
     }
 
     private String getSqlQuery(Pageable pageable) {
+        String query = SQL_SELECT_ALL_USERS_ORDER_BY_NAME;
+        if (pageable != null) {
+            query = buildSqlQuery(pageable);
+        }
+        return query;
+    }
+
+    private String buildSqlQuery(Pageable pageable) {
         String query;
         if (pageable.getSort().isEmpty()) {
-            Sort.Order order = Sort.Order.by("name");
+            Sort.Order order = Sort.Order.by(SORT_BY_COLUMN);
 
             query = collectSqlQuery(pageable, order);
         } else {
-            Sort.Order order = pageable.getSort().toList().get(0);
+            Sort.Order order = pageable.getSort().iterator().next();
 
             query = collectSqlQuery(pageable, order);
         }
@@ -92,12 +127,18 @@ public class UserDAOImpl implements UserDAO {
 
     private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
 
-        String query = SQL_SELECT_ALL_USERS
-                + " ORDER BY " + sort.getProperty() + " " + sort.getDirection().name()
-                + " LIMIT " + pageable.getPageSize()
-                + " OFFSET " + pageable.getOffset();
+        String sortProperty = sort.getProperty();
+        String sortDirectionName = sort.getDirection().name();
+        String limit = "LIMIT";
+        int pageSize = pageable.getPageSize();
+        String offset = "OFFSET";
+        long pageOffset = pageable.getOffset();
 
-        return query;
+        String result = String.format(
+                SQL_SELECT_ALL_USERS_ORDER_BY + " %1$s %2$s %3$s %4$d %5$s %6$d",
+                sortProperty, sortDirectionName, limit, pageSize, offset, pageOffset);
+
+        return result;
     }
 
     @Override
@@ -111,10 +152,15 @@ public class UserDAOImpl implements UserDAO {
         String password = user.getPassword();
         String type = user.getType();
 
-        jdbcTemplate.update(
-                SQL_SAVE_USER,
-                id, name, surname, email, login, password, type
-        );
+        try {
+            jdbcTemplate.update(
+                    SQL_SAVE_USER,
+                    id, name, surname, email, login, password, type
+            );
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong when trying to call the method save()", ex);
+        }
     }
 
     @Override
@@ -128,47 +174,106 @@ public class UserDAOImpl implements UserDAO {
         String password = user.getPassword();
         String type = user.getType();
 
-        jdbcTemplate.update(
-                SQL_UPDATE_USER,
-                name, surname, email, login, password, type, id
-        );
+        try {
+            jdbcTemplate.update(
+                    SQL_UPDATE_USER,
+                    name, surname, email, login, password, type, id
+            );
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong when trying to call the method update()", ex);
+        }
     }
 
     @Override
     public void delete(long id) {
-
-        jdbcTemplate.update(
-                SQL_DELETE_USER,
-                id
-        );
+        try {
+            jdbcTemplate.update(
+                    SQL_DELETE_USER,
+                    id
+            );
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong when trying to call the method delete()", ex);
+        }
     }
 
     @Override
-    public List<Long> getAllEventsByUserId(long id) {
+    public List<String> getAllEventsByUserId(long id) {
 
-        List<Long> events = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_EVENTS_BY_USER_ID,
-                new Object[]{id},
-                Long.class
-        );
+        List<Long> eventIDs = getEventIDs(id);
+
+        List<String> events = convertToNames(eventIDs);
+
         return events;
     }
 
-    @Override
-    public void addNewEvent(long firstId, long secondId) {
+    private List<String> convertToNames(List<Long> input) {
+        List<String> names;
+        try {
+            names = getEventNames(input);
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong in the process of receiving event names " +
+                            "when trying to call the method convertToNames()", ex);
+        }
+        return names;
+    }
 
-        jdbcTemplate.update(
-                SQL_ADD_NEW_EVENT,
-                firstId, secondId
-        );
+    private List<Long> getEventIDs(long id) {
+        List<Long> dataIDs;
+        try {
+            dataIDs = jdbcTemplate.queryForList(
+                    SQL_SELECT_ALL_EVENTS_BY_USER_ID,
+                    Long.class,
+                    id
+            );
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong in the process of receiving IDs " +
+                            "when trying to call the method getEventIDs()", ex);
+        }
+        return dataIDs;
+    }
+
+    private List<String> getEventNames(List<Long> inputData) {
+
+        List<String> result = new ArrayList<>();
+        for (long id : inputData) {
+            String eventName = jdbcTemplate.queryForObject(
+                    SQL_SELECT_EVENT_NAME_BY_ID,
+                    String.class,
+                    id
+            );
+            result.add(eventName);
+        }
+        return result;
     }
 
     @Override
-    public void removeEvent(long firstId, long secondId) {
+    public void addNewEvent(long userId, long eventId) {
+        try {
+            jdbcTemplate.update(
+                    SQL_ADD_NEW_EVENT,
+                    userId, eventId
+            );
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong when trying to call the method addNewEvent()", ex);
+        }
+    }
 
-        jdbcTemplate.update(
-                SQL_DELETE_EVENT,
-                firstId, secondId
-        );
+    @Override
+    public void removeEvent(long userId, long eventId) {
+        try {
+            jdbcTemplate.update(
+                    SQL_DELETE_EVENT,
+                    userId, eventId
+            );
+        } catch (DataAccessException ex) {
+            throw new DAOException(
+                    "Something went wrong when trying to call the method removeEvent()", ex);
+        }
     }
 }
+

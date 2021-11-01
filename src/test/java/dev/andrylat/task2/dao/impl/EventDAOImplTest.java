@@ -2,8 +2,8 @@ package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.EventDAO;
-import dev.andrylat.task2.entities.Category;
 import dev.andrylat.task2.entities.Event;
+import dev.andrylat.task2.exceptions.DataNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +52,7 @@ public class EventDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldGetEventById_WhenInputIsId() throws ParseException {
+    public void getById_ShouldReturnEventById_WhenInputIsId() throws ParseException {
 
         Date date = getDate("13-08-2021 18:23:00");
         Event expectedEvent = getEvent(
@@ -66,7 +66,19 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllEventsSortedByName_WhenInputIsPageRequestWithoutSort() throws ParseException {
+    public void getById_ShouldThrowDataNotFoundException_WhenInputIsDoesNotExistId() throws ParseException {
+
+        Throwable exception = assertThrows(DataNotFoundException.class,
+                () -> eventDAO.getById(-1000));
+
+        String expected = "There is no such event with id = -1000";
+        String actual = exception.getMessage();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void findAll_ShouldReturnAllEventsSortedByName_WhenInputIsPageRequestWithoutSort() throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -100,7 +112,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllEventsSortedByEventId_WhenInputIsPageRequestWithSort() throws ParseException {
+    public void findAll_ShouldReturnAllEventsSortedByEventId_WhenInputIsPageRequestWithSort() throws ParseException {
 
         Pageable sortedById = PageRequest.of(0, 2, Sort.by("event_id"));
 
@@ -132,7 +144,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetOneEventSortedByName_WhenInputIsPageRequestWithPageSizeOneWithoutSortValue()
+    public void findAll_ShouldReturnOneEventSortedByName_WhenInputIsPageRequestWithPageSizeOneWithoutSortValue()
             throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 1);
@@ -158,7 +170,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllEventsSortedByName_WhenPageIsNull() throws ParseException {
+    public void findAll_ShouldReturnAllEventsSortedByName_WhenPageIsNull() throws ParseException {
 
         Pageable page = null;
 
@@ -193,7 +205,6 @@ public class EventDAOImplTest {
     public void save_ShouldSaveEvent_WhenInputIsEventObjectWithDetails() throws ParseException {
 
         Date concertDate = getDate("17-02-1992 16:30:00");
-
         Event event = getEvent(
                 1002, "Leonid Agutin",
                 concertDate, 10000,
@@ -274,21 +285,22 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void getAllCategoriesByEventId_ShouldReturnAllCategoriesId_WhenInputIsEventId() {
+    public void getAllCategoriesByEventId_ShouldReturnAllCategories_WhenInputIsEventId() {
 
         long id = 1000;
 
-        List<Long> actualCategories = eventDAO.getAllCategoriesByEventId(id);
-        List<Long> expectedCategories = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_CATEGORIES_BY_EVENT_ID,
-                new Object[]{id},
-                Long.class
-        );
-        int expectedSize = expectedCategories.size();
-        int actualSize = actualCategories.size();
+        List<String> actualCategoryNames = eventDAO.getAllCategoriesByEventId(id);
+        List<String> expectedCategoryNames = new ArrayList<>();
+
+        expectedCategoryNames.add("exhibition");
+        expectedCategoryNames.add("movie");
+        expectedCategoryNames.add("theatre");
+
+        int expectedSize = expectedCategoryNames.size();
+        int actualSize = actualCategoryNames.size();
 
         assertEquals(expectedSize, actualSize);
-        assertTrue(expectedCategories.containsAll(actualCategories));
+        assertTrue(expectedCategoryNames.containsAll(actualCategoryNames));
     }
 
     @Test
@@ -305,8 +317,8 @@ public class EventDAOImplTest {
         long expectedId = 1;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_CATEGORY_BY_EVENT_ID_AND_CATEGORY_ID,
-                new Object[]{checkEventId, checkCategoryId},
-                Long.class
+                Long.class,
+                checkEventId, checkCategoryId
         );
         assertEquals(expectedId, actualId);
     }
@@ -321,8 +333,8 @@ public class EventDAOImplTest {
 
         List<Long> actualCategories = jdbcTemplate.queryForList(
                 SQL_SELECT_ALL_CATEGORIES_BY_EVENT_ID,
-                new Object[]{eventId},
-                Long.class
+                Long.class,
+                eventId
         );
         int expectedSize = 2;
         int actualSize = actualCategories.size();

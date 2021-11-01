@@ -3,6 +3,7 @@ package dev.andrylat.task2.dao.impl;
 import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.LocationDAO;
 import dev.andrylat.task2.entities.Location;
+import dev.andrylat.task2.exceptions.DataNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,7 @@ public class LocationDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldGetLocationById_WhenInputIsId() {
+    public void getById_ShouldReturnLocationById_WhenInputIsId() {
 
         Location expectedLocation = getLocation(
                 100, "Drunk oyster",
@@ -54,7 +55,19 @@ public class LocationDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllLocationsSortedByName_WhenInputIsPageRequestWithoutSort() {
+    public void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
+
+        Throwable exception = assertThrows(DataNotFoundException.class,
+                () -> locationDAO.getById(-1));
+
+        String expected = "There is no such location with id = -1";
+        String actual = exception.getMessage();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void findAll_ShouldReturnAllLocationsSortedByName_WhenInputIsPageRequestWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -84,7 +97,7 @@ public class LocationDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllLocationsSortedByLocationId_WhenInputIsPageRequestWithSortValue() {
+    public void findAll_ShouldReturnAllLocationsSortedByLocationId_WhenInputIsPageRequestWithSortValue() {
 
         Pageable sortedById = PageRequest.of(0, 2, Sort.by("location_id"));
 
@@ -114,7 +127,7 @@ public class LocationDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllEventsSortedByName_WhenPageIsNull() {
+    public void findAll_ShouldReturnAllEventsSortedByName_WhenPageIsNull() {
 
         Pageable page = null;
 
@@ -144,7 +157,7 @@ public class LocationDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetOneLocationSortedByName_WhenInputIsPageWithSizeOne() {
+    public void findAll_ShouldReturnOneLocationSortedByName_WhenInputIsPageWithSizeOne() {
 
         Pageable sortedById = PageRequest.of(0, 1);
 
@@ -189,9 +202,9 @@ public class LocationDAOImplTest {
         long expectedId = 102;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_LOCATION_ID,
-                new Object[]{checkName, checkWorkingHours, checkType,
-                        checkAddress, checkDescription, checkCapacityPeople},
-                Long.class
+                Long.class,
+                checkName, checkWorkingHours, checkType,
+                checkAddress, checkDescription, checkCapacityPeople
         );
         assertEquals(expectedId, actualId);
     }
@@ -218,9 +231,9 @@ public class LocationDAOImplTest {
         long expectedId = 100;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_LOCATION_ID,
-                new Object[]{checkName, checkWorkingHours, checkType,
-                        checkAddress, checkDescription, checkCapacityPeople},
-                Long.class
+                Long.class,
+                checkName, checkWorkingHours, checkType,
+                checkAddress, checkDescription, checkCapacityPeople
         );
         assertEquals(expectedId, actualId);
     }

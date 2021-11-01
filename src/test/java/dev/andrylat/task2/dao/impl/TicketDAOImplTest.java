@@ -3,6 +3,7 @@ package dev.andrylat.task2.dao.impl;
 import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.TicketDAO;
 import dev.andrylat.task2.entities.Ticket;
+import dev.andrylat.task2.exceptions.DataNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = AppConfigTest.class)
@@ -46,7 +46,7 @@ public class TicketDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldGetTicketById_WhenInputIsId() throws ParseException {
+    public void getById_ShouldReturnTicketById_WhenInputIsId() throws ParseException {
 
         Date date = getDate("17-02-1992 20:45:00");
         Ticket expectedTicket = getTicket(
@@ -60,7 +60,19 @@ public class TicketDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllTicketsSortedByEventName_WhenInputIsPageRequestWithoutSortValue()
+    public void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() throws ParseException {
+
+        Throwable exception = assertThrows(DataNotFoundException.class,
+                () -> ticketDAO.getById(-1));
+
+        String expected = "There is no such ticket with id = -1";
+        String actual = exception.getMessage();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void findAll_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageRequestWithoutSortValue()
             throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 2);
@@ -93,7 +105,7 @@ public class TicketDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllTicketsSortedByEventName_WhenPageIsNull()
+    public void findAll_ShouldReturnAllTicketsSortedByEventName_WhenPageIsNull()
             throws ParseException {
 
         Pageable page = null;
@@ -126,12 +138,12 @@ public class TicketDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllTicketsSortedByEventName_WhenInputIsPageRequestWithSortValue()
+    public void findAll_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageRequestWithSortValue()
             throws ParseException {
 
-        Pageable sortedByName = PageRequest.of(0, 2, Sort.by("ticket_id"));
+        Pageable sortedByID = PageRequest.of(0, 2, Sort.by("ticket_id"));
 
-        List<Ticket> actualTickets = ticketDAO.findAll(sortedByName);
+        List<Ticket> actualTickets = ticketDAO.findAll(sortedByID);
         List<Ticket> expectedTickets = new ArrayList<>();
 
         Date firstCreationDate = getDate("17-02-1992 20:45:00");
@@ -159,7 +171,7 @@ public class TicketDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllTicketsSortedByEventName_WhenInputIsPageWithSizeOne()
+    public void findAll_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageWithSizeOne()
             throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 1);
@@ -198,7 +210,7 @@ public class TicketDAOImplTest {
         ticketDAO.save(newTicket);
 
         String checkName = "circus du soleil";
-        String checkUniquenamber = "0000000000";
+        String checkUniqueNumber = "0000000000";
         Date checkDate = concertDate;
         String checkStatus = "actual";
         long checkUserId = 2000;
@@ -207,9 +219,9 @@ public class TicketDAOImplTest {
         long expectedId = 3002;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_TICKET_ID,
-                new Object[]{checkName, checkUniquenamber, checkDate,
-                        checkStatus, checkUserId, checkEventId},
-                Long.class
+                Long.class,
+                checkName, checkUniqueNumber, checkDate,
+                checkStatus, checkUserId, checkEventId
         );
         assertEquals(expectedId, actualId);
     }
@@ -218,7 +230,6 @@ public class TicketDAOImplTest {
     public void update_ShouldUpdateExistedTicket_WhenInputIsTicketObjectWithDetails() throws ParseException {
 
         Date concertDate = getDate("01-09-2021 22:13:00");
-
         Ticket updatedTicket = getTicket(
                 3000, "Comedy club",
                 "111111111", concertDate,
@@ -237,9 +248,9 @@ public class TicketDAOImplTest {
         long expectedId = 3000;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_TICKET_ID,
-                new Object[]{checkName, checkUniqueNumber, checkDate,
-                        checkStatus, checkUserId, checkEventId},
-                Long.class
+                Long.class,
+                checkName, checkUniqueNumber, checkDate,
+                checkStatus, checkUserId, checkEventId
         );
         assertEquals(expectedId, actualId);
     }

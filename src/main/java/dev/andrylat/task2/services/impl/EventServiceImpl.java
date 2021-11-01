@@ -7,6 +7,8 @@ import dev.andrylat.task2.dto.EventDTO;
 import dev.andrylat.task2.dto.mapper.EventMapper;
 import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.entities.Location;
+import dev.andrylat.task2.exceptions.DAOException;
+import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.exceptions.ServiceException;
 import dev.andrylat.task2.services.EventService;
 import org.apache.log4j.Logger;
@@ -15,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class EventServiceImpl implements EventService {
@@ -38,18 +39,32 @@ public class EventServiceImpl implements EventService {
     public Event getEventById(long id) {
         logger.debug("Call method getEventById() with id = " + id);
 
+        validateId(id);
+
         Event event;
         try {
             event = eventDAO.getById(id);
-        } catch (Exception ex) {
-            logger.error("Could not get event by id = " + id, ex);
-            throw new ServiceException("Could not get event by id = " + id, ex);
+        } catch (DataNotFoundException ex) {
+            logger.error("There is no such event with id = " + id);
+            throw new ServiceException("There is no such event with id = " + id, ex);
+        } catch (DAOException ex) {
+            logger.error("Something went wrong when trying to call the method getEventById()");
+            throw new ServiceException("Something went wrong when trying to call the method getEventById()", ex);
         }
         if (logger.isDebugEnabled()) {
-            logger.debug("Event is" + event.toString());
+            logger.debug("Event is " + event);
         }
         return event;
     }
+
+    private void validateId(long id) {
+        logger.debug("Call method validateId() with id = " + id);
+        if (id <= 0) {
+            logger.error("id can not be less or equals zero");
+            throw new ServiceException("id can not be less or equals zero");
+        }
+    }
+
 
     @Override
     public List<Event> findAllEvents(Pageable pageable) {
@@ -58,25 +73,36 @@ public class EventServiceImpl implements EventService {
         List<Event> events;
         try {
             events = eventDAO.findAll(pageable);
-        } catch (Exception ex) {
+        } catch (DAOException ex) {
             logger.error("Could not get events", ex);
             throw new ServiceException("Could not get events", ex);
         }
         if (logger.isDebugEnabled()) {
-            logger.debug("Events are " + events.toString());
+            logger.debug("Events are " + events);
         }
         return events;
     }
 
     @Override
     public void saveEvent(Event event) {
+        logger.debug("Call method saveEvent() for event with id = " + event.getId());
 
-        Event resultQuery = getEventById(event.getId());
+        validate(event);
+    }
 
-        if (resultQuery == null) {
-            saveNewEvent(event);
-        } else {
+    private void validate(Event event) {
+        logger.debug("Call method validate() for event with id = " + event.getId());
+
+        validateId(event.getId());
+
+        try {
+            eventDAO.getById(event.getId());
+
             updateEvent(event);
+        } catch (DataNotFoundException ex) {
+            saveNewEvent(event);
+        } catch (DAOException ex) {
+            throw new ServiceException("Something went wrong when trying to call the method saveEvent()", ex);
         }
     }
 
@@ -85,12 +111,12 @@ public class EventServiceImpl implements EventService {
 
         try {
             eventDAO.save(event);
-        } catch (Exception ex) {
+        } catch (DAOException ex) {
             logger.error("Could not save event with id = " + event.getId(), ex);
             throw new ServiceException("Could not save event with id = " + event.getId(), ex);
         }
         if (logger.isDebugEnabled()) {
-            logger.debug(event.toString() + "is added in DB");
+            logger.debug(event + " is added in DB");
         }
     }
 
@@ -99,12 +125,12 @@ public class EventServiceImpl implements EventService {
 
         try {
             eventDAO.update(event);
-        } catch (Exception ex) {
+        } catch (DAOException ex) {
             logger.error("Could not update event with id = " + event.getId(), ex);
             throw new ServiceException("Could not update event with id = " + event.getId(), ex);
         }
         if (logger.isDebugEnabled()) {
-            logger.debug(event.toString() + "is updated in DB");
+            logger.debug(event + " is updated in DB");
         }
     }
 
@@ -112,9 +138,11 @@ public class EventServiceImpl implements EventService {
     public void deleteEventById(long id) {
         logger.debug("Call method deleteEventById() with event id = " + id);
 
+        validateId(id);
+
         try {
             eventDAO.delete(id);
-        } catch (Exception ex) {
+        } catch (DAOException ex) {
             logger.error("Could not delete event with id = " + id, ex);
             throw new ServiceException("Could not delete event with id = " + id, ex);
         }
@@ -122,50 +150,52 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<Long> getAllCategoriesByEventId(long id) {
+    public List<String> getAllCategoriesByEventId(long id) {
         logger.debug("Call method getAllCategoriesByEventId() with id = " + id);
 
-        List<Long> categories;
+        validateId(id);
+
+        List<String> categories;
         try {
             categories = eventDAO.getAllCategoriesByEventId(id);
-        } catch (Exception ex) {
+        } catch (DAOException ex) {
             logger.error("Could not get categories", ex);
             throw new ServiceException("Could not get categories", ex);
         }
         if (logger.isDebugEnabled()) {
-            logger.debug("Categories are " + categories.toString());
+            logger.debug("Categories are " + categories);
         }
         return categories;
     }
 
     @Override
-    public void addNewCategory(long firstId, long secondId) {
+    public void addNewCategory(long eventId, long categoryId) {
         logger.debug("Call method addNewCategory() for " +
-                "event id = " + firstId + " and category id = " + secondId);
+                "event id = " + eventId + " and category id = " + categoryId);
 
         try {
-            eventDAO.addNewCategory(firstId, secondId);
-        } catch (Exception ex) {
+            eventDAO.addNewCategory(eventId, categoryId);
+        } catch (DAOException ex) {
             logger.error("Could not add category with " +
-                    "event id = " + firstId + " and category id = " + secondId, ex);
+                    "event id = " + eventId + " and category id = " + categoryId, ex);
             throw new ServiceException("Could not add category with " +
-                    "event id = " + firstId + " and category id = " + secondId, ex);
+                    "event id = " + eventId + " and category id = " + categoryId, ex);
         }
-        logger.debug("Category with id = " + secondId + "is added in DB");
+        logger.debug("Category with id = " + categoryId + " is added in DB");
     }
 
     @Override
-    public void removeCategory(long firstId, long secondId) {
+    public void removeCategory(long eventId, long categoryId) {
         logger.debug("Call method removeCategory() for " +
-                "event id = " + firstId + " and category id = " + secondId);
+                "event id = " + eventId + " and category id = " + categoryId);
 
         try {
-            eventDAO.removeCategory(firstId, secondId);
-        } catch (Exception ex) {
-            logger.error("Could not delete category with id = " + secondId, ex);
-            throw new ServiceException("Could not delete category with id = " + secondId, ex);
+            eventDAO.removeCategory(eventId, categoryId);
+        } catch (DAOException ex) {
+            logger.error("Could not delete category with id = " + categoryId, ex);
+            throw new ServiceException("Could not delete category with id = " + categoryId, ex);
         }
-        logger.debug("Category with id = " + secondId + " is deleted in DB");
+        logger.debug("Category with id = " + categoryId + " is deleted in DB");
     }
 
     @Override
@@ -174,32 +204,16 @@ public class EventServiceImpl implements EventService {
 
         Event event = getEventById(id);
 
-        List<Long> categories = getAllCategoriesByEventId(id);
-
-        List<String> categoryNames = getCategoryNames(categories, categoryDAO);
+        List<String> categoryNames = getAllCategoriesByEventId(id);
 
         Location location = getLocationById(event.getLocationId());
 
         EventDTO eventDTO = eventMapper.convertToDTO(event, categoryNames, location);
 
         if (logger.isDebugEnabled()) {
-            logger.debug("EventDTO is " + eventDTO.toString());
+            logger.debug("EventDTO is " + eventDTO);
         }
         return eventDTO;
-    }
-
-    private List<String> getCategoryNames(List<Long> input, CategoryDAO dao) {
-
-        List<String> result;
-        try {
-            result = input.stream()
-                    .map(id -> dao.getById(id).getTitle())
-                    .collect(Collectors.toList());
-        } catch (Exception ex) {
-            logger.error("Could not get category", ex);
-            throw new ServiceException("Could not get category", ex);
-        }
-        return result;
     }
 
     private Location getLocationById(long id) {
@@ -208,12 +222,15 @@ public class EventServiceImpl implements EventService {
         Location location;
         try {
             location = locationDAO.getById(id);
-        } catch (Exception ex) {
-            logger.error("Could not get location by id = " + id, ex);
-            throw new ServiceException("Could not get location by id = " + id, ex);
+        } catch (DataNotFoundException ex) {
+            logger.error("There is no such location with id = " + id);
+            throw new ServiceException("There is no such location with id = " + id, ex);
+        } catch (DAOException ex) {
+            logger.error("Something went wrong when trying to call the method getLocationById()");
+            throw new ServiceException("Something went wrong when trying to call the method getLocationById()", ex);
         }
         if (logger.isDebugEnabled()) {
-            logger.debug("Location is" + location.toString());
+            logger.debug("Location is " + location);
         }
         return location;
     }

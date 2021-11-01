@@ -1,5 +1,6 @@
 package dev.andrylat.task2.dao;
 
+import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.entities.User;
 import org.springframework.data.domain.Pageable;
 
@@ -17,9 +18,9 @@ public interface UserDAO extends GenericDAO<User>{
 
     void delete(long id);
 
-    List<Long> getAllEventsByUserId(long id);
+    List<String> getAllEventsByUserId(long id);
 
-    void addNewEvent(long firstId, long secondId);
+    void addNewEvent(long userId, long eventId);
 
-    void removeEvent(long firstId, long secondId);
+    void removeEvent(long userId, long eventId);
 }

@@ -3,6 +3,7 @@ package dev.andrylat.task2.dao.impl;
 import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.CategoryDAO;
 import dev.andrylat.task2.entities.Category;
+import dev.andrylat.task2.exceptions.DataNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class CategoryDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldGetCategoryById_WhenInputIsId() {
+    public void getById_ShouldReturnCategoryById_WhenInputIsId() {
 
         Category expectedCategory = getCategory(1, "exhibition");
         Category actualCategory = categoryDAO.getById(1);
@@ -47,7 +48,19 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSort() {
+    public void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
+
+        Throwable exception = assertThrows(DataNotFoundException.class,
+                () -> categoryDAO.getById(-1));
+
+        String expected = "There is no such category with id = -1";
+        String actual = exception.getMessage();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void findAll_ShouldReturnAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 4);
 
@@ -68,9 +81,8 @@ public class CategoryDAOImplTest {
         }
     }
 
-
     @Test
-    public void findAll_ShouldGetTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSort() {
+    public void findAll_ShouldReturnTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -90,9 +102,9 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
+    public void findAll_ShouldReturnAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
 
-        Pageable sortedById = PageRequest.of(0, 4, Sort.by("category_id"));
+        Pageable sortedById = PageRequest.of(0, 1, Sort.by("category_id"));
 
         List<Category> actualCategoryIDs = categoryDAO.findAll(sortedById);
         List<Integer> expectedCategoryIDs = new ArrayList<>();
@@ -111,7 +123,7 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldGetAllCategoriesSortedByName_WhenPageIsNull() {
+    public void findAll_ShouldReturnAllCategoriesSortedByName_WhenPageIsNull() {
 
         Pageable page = null;
 
@@ -144,8 +156,8 @@ public class CategoryDAOImplTest {
         long expectedId = 5;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_CATEGORY_ID,
-                new Object[]{checkName},
-                Long.class
+                Long.class,
+                checkName
         );
         assertEquals(expectedId, actualId);
     }
@@ -162,8 +174,8 @@ public class CategoryDAOImplTest {
         int expectedId = 1;
         Integer actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_CATEGORY_ID,
-                new Object[]{checkName},
-                Integer.class
+                Integer.class,
+                checkName
         );
         assertEquals(expectedId, actualId);
     }
@@ -182,7 +194,7 @@ public class CategoryDAOImplTest {
         int expectedSize = 3;
         int actualSize = actualId.size();
 
-        int checkedId = 1;
+        long checkedId = 1;
 
         assertEquals(expectedSize, actualSize);
         assertFalse(actualId.contains(checkedId));

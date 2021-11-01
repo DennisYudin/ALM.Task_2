@@ -16,11 +16,11 @@ public interface EventService {
 
     void deleteEventById(long id);
 
-    List<Long> getAllCategoriesByEventId(long id);
+    List<String> getAllCategoriesByEventId(long id);
 
-    void addNewCategory(long firstId, long secondId);
+    void addNewCategory(long eventId, long categoryId);
 
-    void removeCategory(long firstId, long secondId);
+    void removeCategory(long eventId, long categoryId);
 
     EventDTO getEventWithDetails(long id);
 }

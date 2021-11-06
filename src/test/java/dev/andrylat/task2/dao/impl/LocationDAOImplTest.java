@@ -42,7 +42,7 @@ public class LocationDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldReturnLocationById_WhenInputIsId() {
+    public void getById_ShouldReturnLocation_WhenInputIsExistId() {
 
         Location expectedLocation = getLocation(
                 100, "Drunk oyster",
@@ -57,13 +57,7 @@ public class LocationDAOImplTest {
     @Test
     public void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
 
-        Throwable exception = assertThrows(DataNotFoundException.class,
-                () -> locationDAO.getById(-1));
-
-        String expected = "There is no such location with id = -1";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(DataNotFoundException.class, () -> locationDAO.getById(-1));
     }
 
     @Test
@@ -210,7 +204,7 @@ public class LocationDAOImplTest {
     }
 
     @Test
-    public void update_ShouldUpdateExistedLocation_WhenInputIsLocationObjectWithDetails() {
+    public void save_ShouldUpdateExistedLocation_WhenInputIsLocationObjectWithDetails() {
 
         Location updatedLocation = getLocation(
                 100, "Green sleeve",
@@ -219,7 +213,7 @@ public class LocationDAOImplTest {
                 1200
         );
 
-        locationDAO.update(updatedLocation);
+        locationDAO.save(updatedLocation);
 
         String checkName = "Green sleeve";
         String checkWorkingHours = "10:00-15:00";

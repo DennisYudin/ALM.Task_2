@@ -46,7 +46,7 @@ class EventServiceImplTest {
     }
 
     @Test
-    void getEventWithDetails_ShouldReturnEventById_WhenInputIsId() throws ParseException {
+    void getById_ShouldReturnEvent_WhenInputIsExistId() throws ParseException {
 
         Date date = getDate("13-08-2021 18:23:00");
         Event expectedEvent = getEvent(
@@ -56,28 +56,22 @@ class EventServiceImplTest {
         );
         Mockito.when(eventDAO.getById(1000)).thenReturn(expectedEvent);
 
-        Event actualEvent = eventService.getEventById(1000);
+        Event actualEvent = eventService.getById(1000);
 
         assertEquals(expectedEvent, actualEvent);
     }
 
 
     @Test
-    void getEventWithDetails_ShouldThrowServiceException_WhenInputIsIncorrectId() {
+    void getById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
 
         Mockito.when(eventDAO.getById(-1)).thenThrow(ServiceException.class);
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> eventService.getEventById(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> eventService.getById(-1));
     }
 
     @Test
-    void findAllEvents_ShouldReturnAllEventsSortedByName_WhenInputIsPageRequestWithoutSort() throws ParseException {
+    void findAll_ShouldReturnAllEventsSortedByName_WhenInputIsPageRequestWithoutSort() throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -102,13 +96,13 @@ class EventServiceImplTest {
 
         Mockito.when(eventDAO.findAll(sortedByName)).thenReturn(expectedEvents);
 
-        List<Event> actualEvents = eventService.findAllEvents(sortedByName);
+        List<Event> actualEvents = eventService.findAll(sortedByName);
 
         assertTrue(expectedEvents.containsAll(actualEvents));
     }
 
     @Test
-    void findAllEvents_ShouldReturnAllEventsSortedByEventId_WhenInputIsPageRequestWithSort() throws ParseException {
+    void findAll_ShouldReturnAllEventsSortedByEventId_WhenInputIsPageRequestWithSort() throws ParseException {
 
         Pageable sortedById = PageRequest.of(0, 2, Sort.by("event_id"));
 
@@ -131,13 +125,13 @@ class EventServiceImplTest {
 
         Mockito.when(eventDAO.findAll(sortedById)).thenReturn(expectedEvents);
 
-        List<Event> actualEvents = eventService.findAllEvents(sortedById);
+        List<Event> actualEvents = eventService.findAll(sortedById);
 
         assertTrue(expectedEvents.containsAll(actualEvents));
     }
 
     @Test
-    void findAllEvents_ShouldReturnOneEventSortedByName_WhenInputIsPageRequestWithPageSizeOneWithoutSortValue()
+    void findAll_ShouldReturnOneEventSortedByName_WhenInputIsPageRequestWithPageSizeOneWithoutSortValue()
             throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 1);
@@ -154,7 +148,7 @@ class EventServiceImplTest {
 
         Mockito.when(eventDAO.findAll(sortedByName)).thenReturn(expectedEvents);
 
-        List<Event> actualEvents = eventService.findAllEvents(sortedByName);
+        List<Event> actualEvents = eventService.findAll(sortedByName);
 
         assertTrue(expectedEvents.containsAll(actualEvents));
     }
@@ -183,13 +177,13 @@ class EventServiceImplTest {
 
         Mockito.when(eventDAO.findAll(page)).thenReturn(expectedEvents);
 
-        List<Event> actualEvents = eventService.findAllEvents(page);
+        List<Event> actualEvents = eventService.findAll(page);
 
         assertTrue(expectedEvents.containsAll(actualEvents));
     }
 
     @Test
-    void saveEvent_ShouldSaveNewEvent_WhenInputIsNewEventObjectWithDetails() throws ParseException {
+    void save_ShouldSaveNewEvent_WhenInputIsNewEventObjectWithDetails() throws ParseException {
 
         Date concertDate = getDate("17-02-1992 16:30:00");
         Event newEvent = getEvent(
@@ -200,13 +194,13 @@ class EventServiceImplTest {
         );
         Mockito.when(eventDAO.getById(1002)).thenThrow(DataNotFoundException.class);
 
-        eventService.saveEvent(newEvent);
+        eventService.save(newEvent);
 
         Mockito.verify(eventDAO, Mockito.times(1)).save(newEvent);
     }
 
     @Test
-    void saveEvent_ShouldUpdateExistedEvent_WhenInputIsEventObjectWithDetails() throws ParseException {
+    void save_ShouldUpdateExistedEvent_WhenInputIsEventObjectWithDetails() throws ParseException {
 
         Date concertDate = getDate("13-08-2021 18:23:00");
         Event oldEvent = getEvent(1000, "Oxxxymiron concert",
@@ -223,29 +217,23 @@ class EventServiceImplTest {
         );
         Mockito.when(eventDAO.getById(1000)).thenReturn(oldEvent);
 
-        eventService.saveEvent(updatedEvent);
+        eventService.save(updatedEvent);
 
-        Mockito.verify(eventDAO, Mockito.times(1)).update(updatedEvent);
+        Mockito.verify(eventDAO, Mockito.times(1)).save(updatedEvent);
     }
 
     @Test
-    void deleteEventById_ShouldDeleteEventById_WhenInputIsId() {
+    void delete_ShouldDeleteEventById_WhenInputIsId() {
 
-        eventService.deleteEventById(1000);
+        eventService.delete(1000);
 
         Mockito.verify(eventDAO, Mockito.times(1)).delete(1000);
     }
 
     @Test
-    void deleteEventById_ShouldThrowServiceException_WhenInputHasNegativeId() {
+    void delete_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> eventService.deleteEventById(-1000));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> eventService.delete(-1000));
     }
 
     @Test
@@ -267,13 +255,7 @@ class EventServiceImplTest {
     @Test
     void getAllCategoriesByEventId_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> eventService.getAllCategoriesByEventId(-1000));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> eventService.getAllCategoriesByEventId(-1000));
     }
 
     @Test
@@ -364,13 +346,7 @@ class EventServiceImplTest {
     @Test
     void getEventWithDetails_ShouldThrowServiceException_WhenInputHasNegativeId() throws ParseException {
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> eventService.getEventWithDetails(-1000));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> eventService.getEventWithDetails(-1000));
     }
 
     @Test
@@ -378,14 +354,7 @@ class EventServiceImplTest {
 
         Mockito.when(eventDAO.getById(125)).thenThrow(DataNotFoundException.class);
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> eventService.getEventWithDetails(125));
-
-
-        String expected = "There is no such event with id = 125";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> eventService.getEventWithDetails(125));
     }
 
     private Event getEvent(long id, String name,

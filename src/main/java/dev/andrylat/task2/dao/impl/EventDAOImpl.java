@@ -5,6 +5,7 @@ import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.mappers.EventRowMapper;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Log4j
 @Repository("eventDAO")
 public class EventDAOImpl implements EventDAO {
     private static final String SQL_SELECT_EVENT_BY_ID = "SELECT * FROM events WHERE event_id = ?";
@@ -46,7 +48,19 @@ public class EventDAOImpl implements EventDAO {
             "SELECT name " +
             "FROM categories " +
             "WHERE category_id = ?";
-    private static final String SORT_BY_COLUMN = "name";
+
+    private static final String DEFAULT_SORT_BY_COLUMN_NAME = "name";
+
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such event with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVEEVENT_METHOD = "Error during call the method saveEvent()";
+    private static final String ERROR_MESSAGE_FOR_UPDATEEVENT_METHOD = "Error during call the method updateEvent()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
+    private static final String ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD = "Error during call the method convertToNames()";
+    private static final String ERROR_MESSAGE_FOR_GETCATEGORYIDS_METHOD = "Error during call the method getCategoryIDs()";
+    private static final String ERROR_MESSAGE_FOR_ADDNEWCATEGORY_METHOD = "Error during call the method addNewCategory()";
+    private static final String ERROR_MESSAGE_FOR_REMOVECATEGORY_METHOD = "Error during call the method removeCategory()";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -60,92 +74,104 @@ public class EventDAOImpl implements EventDAO {
 
     @Override
     public Event getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         Event event;
         try {
-            event = getEvent(id);
+            event = jdbcTemplate.queryForObject(
+                    SQL_SELECT_EVENT_BY_ID,
+                    eventRowMapper,
+                    id
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("Event is " + event);
+            }
+            return event;
         } catch (EmptyResultDataAccessException ex) {
-            throw new DataNotFoundException(
-                    "There is no such event with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new DataNotFoundException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method getById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        return event;
-    }
-
-    private Event getEvent(long id) {
-        Event event = jdbcTemplate.queryForObject(
-                SQL_SELECT_EVENT_BY_ID,
-                eventRowMapper,
-                id
-        );
-        return event;
     }
 
     @Override
     public List<Event> findAll(Pageable page) {
+        log.debug("Call method findAll()");
 
-        String sqlQuery = getSqlQuery(page);
+        String sqlQuery = buildSqlQuery(page);
 
         List<Event> events;
         try {
-            events = getEvents(sqlQuery);
+            events = jdbcTemplate.query(
+                    sqlQuery,
+                    eventRowMapper
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("Events are " + events);
+            }
+            return events;
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method findAll()", ex);
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        return events;
-    }
-
-    private List<Event> getEvents(String query) {
-        List<Event> events = jdbcTemplate.query(
-                query,
-                eventRowMapper
-        );
-        return events;
-    }
-
-    private String getSqlQuery(Pageable pageable) {
-        String query = SQL_SELECT_ALL_EVENTS_ORDER_BY_NAME;
-        if (pageable != null) {
-            query = buildSqlQuery(pageable);
-        }
-        return query;
     }
 
     private String buildSqlQuery(Pageable pageable) {
-        String query;
-        if (pageable.getSort().isEmpty()) {
-            Sort.Order order = Sort.Order.by(SORT_BY_COLUMN);
+        log.debug("Call method buildSqlQuery()");
 
-            query = collectSqlQuery(pageable, order);
-        } else {
-            Sort.Order order = pageable.getSort().iterator().next();
-
-            query = collectSqlQuery(pageable, order);
+        String query = SQL_SELECT_ALL_EVENTS_ORDER_BY_NAME;
+        if (pageable != null) {
+            query = buildSqlQueryWithPageable(pageable);
         }
+        log.debug("SQL query is " + query);
+        return query;
+    }
+
+    private String buildSqlQueryWithPageable(Pageable pageable) {
+        log.debug("Call method buildSqlQueryWithPageable()");
+
+        Sort.Order order;
+        if (pageable.getSort().isEmpty()) {
+            order = Sort.Order.by(DEFAULT_SORT_BY_COLUMN_NAME);
+        } else {
+            order = pageable.getSort().iterator().next();
+
+        }
+        String query = collectSqlQuery(pageable, order);
+
         return query;
     }
 
     private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
+        log.debug("Call method collectSqlQuery()");
 
         String sortProperty = sort.getProperty();
         String sortDirectionName = sort.getDirection().name();
-        String limit = "LIMIT";
         int pageSize = pageable.getPageSize();
-        String offset = "OFFSET";
         long pageOffset = pageable.getOffset();
 
         String result = String.format(
-                SQL_SELECT_ALL_EVENTS_ORDER_BY + " %1$s %2$s %3$s %4$d %5$s %6$d",
-                sortProperty, sortDirectionName, limit, pageSize, offset, pageOffset);
+                SQL_SELECT_ALL_EVENTS_ORDER_BY + " %1$s %2$s LIMIT %3$s OFFSET %4$d",
+                sortProperty, sortDirectionName, pageSize, pageOffset);
 
         return result;
     }
 
     @Override
     public void save(Event event) {
+        log.debug("Call method save() for event with id = " + event.getId());
+
+        if (doesExist(event.getId())) {
+            updateEvent(event);
+        } else {
+            saveEvent(event);
+        }
+    }
+
+    public void saveEvent(Event event) {
+        log.debug("Call method saveEvent() for event with id = " + event.getId());
 
         long id = event.getId();
         String title = event.getTitle();
@@ -161,13 +187,13 @@ public class EventDAOImpl implements EventDAO {
                     id, title, date, price, status, description, locationId
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method save()", ex);
+            log.error(ERROR_MESSAGE_FOR_SAVEEVENT_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_SAVEEVENT_METHOD, ex);
         }
     }
 
-    @Override
-    public void update(Event event) {
+    public void updateEvent(Event event) {
+        log.debug("Call method updateEvent() for event with id = " + event.getId());
 
         long id = event.getId();
         String title = event.getTitle();
@@ -183,47 +209,57 @@ public class EventDAOImpl implements EventDAO {
                     title, date, price, status, description, locationId, id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method update()", ex);
+            log.error(ERROR_MESSAGE_FOR_UPDATEEVENT_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_UPDATEEVENT_METHOD, ex);
         }
     }
 
     @Override
     public void delete(long id) {
+        log.debug("Call method delete() for event with id = " + id);
+
         try {
             jdbcTemplate.update(
                     SQL_DELETE_EVENT,
                     id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method delete()", ex);
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
     }
 
     @Override
     public List<String> getAllCategoriesByEventId(long id) {
+        log.debug("Call method getAllCategoriesByEventId() for event with id = " + id);
 
         List<Long> categoryIDs = getCategoryIDs(id);
 
         List<String> categoryNames = convertToNames(categoryIDs);
 
+        if (log.isDebugEnabled()) {
+            log.debug("Category names are " + categoryNames);
+        }
         return categoryNames;
     }
 
     private List<String> convertToNames(List<Long> input) {
+        log.debug("Call method convertToNames()");
+
         List<String> names;
         try {
             names = getCategoryNames(input);
+
+            return names;
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong in the process of receiving category names " +
-                            "when trying to call the method convertToNames()", ex);
+            log.error(ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD, ex);
         }
-        return names;
     }
 
     private List<Long> getCategoryIDs(long id) {
+        log.debug("Call method getCategoryIDs()");
+
         List<Long> dataIDs;
         try {
             dataIDs = jdbcTemplate.queryForList(
@@ -231,15 +267,15 @@ public class EventDAOImpl implements EventDAO {
                     Long.class,
                     id
             );
+            return dataIDs;
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong in the process of receiving IDs " +
-                            "when trying to call the method getCategoryIDs()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETCATEGORYIDS_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_GETCATEGORYIDS_METHOD, ex);
         }
-        return dataIDs;
     }
 
     private List<String> getCategoryNames(List<Long> inputData) {
+        log.debug("Call method getCategoryNames()");
 
         List<String> result = new ArrayList<>();
         for (long id : inputData) {
@@ -255,27 +291,31 @@ public class EventDAOImpl implements EventDAO {
 
     @Override
     public void addNewCategory(long eventId, long categoryId) {
+        log.debug("Call method addNewCategory()");
+
         try {
             jdbcTemplate.update(
                     SQL_ADD_NEW_CATEGORY,
                     eventId, categoryId
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method addNewCategory()", ex);
+            log.error(ERROR_MESSAGE_FOR_ADDNEWCATEGORY_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_ADDNEWCATEGORY_METHOD, ex);
         }
     }
 
     @Override
     public void removeCategory(long eventId, long categoryId) {
+        log.debug("Call method removeCategory()");
+
         try {
             jdbcTemplate.update(
                     SQL_DELETE_CATEGORY,
                     eventId, categoryId
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method removeCategory()", ex);
+            log.error(ERROR_MESSAGE_FOR_REMOVECATEGORY_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_REMOVECATEGORY_METHOD, ex);
         }
     }
 }

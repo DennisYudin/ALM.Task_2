@@ -34,7 +34,7 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getById_ShouldReturnUserById_WhenInputIsId() {
+    void getById_ShouldReturnUser_WhenInputIsExistId() {
 
         User expectedUser = getUser(
                 2000, "Dennis", "Yudin",
@@ -43,7 +43,7 @@ class UserServiceImplTest {
         );
         Mockito.when(userDAO.getById(2000)).thenReturn(expectedUser);
 
-        User actualUser = userService.getUserById(2000);
+        User actualUser = userService.getById(2000);
 
         assertEquals(expectedUser, actualUser);
     }
@@ -53,17 +53,11 @@ class UserServiceImplTest {
 
         Mockito.when(userDAO.getById(-1)).thenThrow(ServiceException.class);
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> userService.getUserById(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> userService.getById(-1));
     }
 
     @Test
-    void findAllUsers_ShouldReturnAllUsersSortedByName_WhenInputIsPageRequestWithoutSort() {
+    void findAll_ShouldReturnAllUsersSortedByName_WhenInputIsPageRequestWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -84,13 +78,13 @@ class UserServiceImplTest {
 
         Mockito.when(userDAO.findAll(sortedByName)).thenReturn(expectedUsers);
 
-        List<User> actualUsers = userService.findAllUsers(sortedByName);
+        List<User> actualUsers = userService.findAll(sortedByName);
 
         assertTrue(expectedUsers.containsAll(actualUsers));
     }
 
     @Test
-    void findAllUsers_ShouldReturnOneUserSortedByName_WhenInputIsPageWithSizeOne() {
+    void findAll_ShouldReturnOneUserSortedByName_WhenInputIsPageWithSizeOne() {
 
         Pageable sortedByName = PageRequest.of(0, 1);
 
@@ -105,13 +99,13 @@ class UserServiceImplTest {
 
         Mockito.when(userDAO.findAll(sortedByName)).thenReturn(expectedUsers);
 
-        List<User> actualUsers = userService.findAllUsers(sortedByName);
+        List<User> actualUsers = userService.findAll(sortedByName);
 
         assertTrue(expectedUsers.containsAll(actualUsers));
     }
 
     @Test
-    void findAllUsers_ShouldReturnAllUsersSortedBySurname_WhenInputIsPageRequestWithSortValue() {
+    void findAll_ShouldReturnAllUsersSortedBySurname_WhenInputIsPageRequestWithSortValue() {
 
         Pageable sortedBySurname = PageRequest.of(0, 2, Sort.by("surname"));
 
@@ -132,13 +126,13 @@ class UserServiceImplTest {
 
         Mockito.when(userDAO.findAll(sortedBySurname)).thenReturn(expectedUsers);
 
-        List<User> actualUsers = userService.findAllUsers(sortedBySurname);
+        List<User> actualUsers = userService.findAll(sortedBySurname);
 
         assertTrue(expectedUsers.containsAll(actualUsers));
     }
 
     @Test
-    void findAllUsers_ShouldReturnAllUsersSortedByName_WhenPageIsNull() {
+    void findAll_ShouldReturnAllUsersSortedByName_WhenPageIsNull() {
 
         Pageable page = null;
 
@@ -159,13 +153,13 @@ class UserServiceImplTest {
 
         Mockito.when(userDAO.findAll(page)).thenReturn(expectedUsers);
 
-        List<User> actualUsers = userService.findAllUsers(page);
+        List<User> actualUsers = userService.findAll(page);
 
         assertTrue(expectedUsers.containsAll(actualUsers));
     }
 
     @Test
-    void saveUser_ShouldSaveNewUser_WhenInputIsUserObjectWithDetails() {
+    void save_ShouldSaveNewUser_WhenInputIsUserObjectWithDetails() {
 
         User newUser = getUser(
                 2002, "Vandam",
@@ -175,13 +169,13 @@ class UserServiceImplTest {
         );
         Mockito.when(userDAO.getById(2002)).thenThrow(DataNotFoundException.class);
 
-        userService.saveUser(newUser);
+        userService.save(newUser);
 
         Mockito.verify(userDAO, Mockito.times(1)).save(newUser);
     }
 
     @Test
-    void saveUser_ShouldUpdateExistedUser_WhenInputIsUserObjectWithDetails() {
+    void save_ShouldUpdateExistedUser_WhenInputIsUserObjectWithDetails() {
 
         User oldUser = getUser(
                 2000, "Dennis",
@@ -195,29 +189,23 @@ class UserServiceImplTest {
         );
         Mockito.when(userDAO.getById(200)).thenReturn(oldUser);
 
-        userService.saveUser(updatedUser);
+        userService.save(updatedUser);
 
-        Mockito.verify(userDAO, Mockito.times(1)).update(updatedUser);
+        Mockito.verify(userDAO, Mockito.times(1)).save(updatedUser);
     }
 
     @Test
-    void deleteUserById_ShouldDeleteUserById_WhenInputIsId() {
+    void delete_ShouldDeleteUserById_WhenInputIsId() {
 
-        userService.deleteUserById(2000);
+        userService.delete(2000);
 
         Mockito.verify(userDAO, Mockito.times(1)).delete(2000);
     }
 
     @Test
-    void deleteUserById_ShouldThrowServiceException_WhenInputHasNegativeId() {
+    void delete_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> userService.deleteUserById(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> userService.delete(-1));
     }
 
     @Test
@@ -247,13 +235,7 @@ class UserServiceImplTest {
     @Test
     void getAllEventsByUserId_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> userService.getAllEventsByUserId(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> userService.getAllEventsByUserId(-1));
     }
 
     @Test

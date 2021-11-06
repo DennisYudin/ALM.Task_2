@@ -2,7 +2,6 @@ package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.UserDAO;
-import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.entities.User;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -16,11 +15,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class UserDAOImplTest {
+class UserDAOImplTest {
     private static final String SQL_SELECT_USER_ID = "" +
             "SELECT user_id " +
             "FROM users " +
@@ -55,7 +51,7 @@ public class UserDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void getById_ShouldReturnUserById_WhenInputIsId() {
+    void getById_ShouldReturnUser_WhenInputIsExistId() {
 
         User expectedUser = getUser(
                 2000, "Dennis", "Yudin",
@@ -70,13 +66,7 @@ public class UserDAOImplTest {
     @Test
     void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
 
-        Throwable exception = assertThrows(DataNotFoundException.class,
-                () -> userDAO.getById(-1));
-
-        String expected = "There is no such user with id = -1";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(DataNotFoundException.class, () -> userDAO.getById(-1));
     }
 
     @Test
@@ -223,7 +213,7 @@ public class UserDAOImplTest {
     }
 
     @Test
-    void update_ShouldUpdateExistedUser_WhenInputIsUserObjectWithDetails() {
+    void save_ShouldUpdateExistedUser_WhenInputIsUserObjectWithDetails() {
 
         User updatedUser = getUser(
                 2000, "Oleg",
@@ -232,7 +222,7 @@ public class UserDAOImplTest {
                 "customer"
         );
 
-        userDAO.update(updatedUser);
+        userDAO.save(updatedUser);
 
         String checkName = "Oleg";
         String checkSurname = "Petrov";
@@ -265,7 +255,7 @@ public class UserDAOImplTest {
         int expectedSize = 1;
         int actualSize = actualId.size();
 
-        int checkedId = 2000;
+        long checkedId = 2000;
 
         assertEquals(expectedSize, actualSize);
         assertFalse(actualId.contains(checkedId));

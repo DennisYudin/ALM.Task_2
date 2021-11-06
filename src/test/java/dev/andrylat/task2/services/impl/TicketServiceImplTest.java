@@ -1,7 +1,6 @@
 package dev.andrylat.task2.services.impl;
 
 import dev.andrylat.task2.dao.TicketDAO;
-import dev.andrylat.task2.entities.Category;
 import dev.andrylat.task2.entities.Ticket;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.exceptions.ServiceException;
@@ -47,7 +46,7 @@ class TicketServiceImplTest {
 
         Mockito.when(ticketDAO.getById(3000)).thenReturn(expectedTicket);
 
-        Ticket actualTicket = ticketService.getTicketById(3000);
+        Ticket actualTicket = ticketService.getById(3000);
 
         assertEquals(expectedTicket, actualTicket);
     }
@@ -58,7 +57,7 @@ class TicketServiceImplTest {
         Mockito.when(ticketDAO.getById(-1)).thenThrow(ServiceException.class);
 
         Throwable exception = assertThrows(ServiceException.class,
-                () -> ticketService.getTicketById(-1));
+                () -> ticketService.getById(-1));
 
         String expected = "id can not be less or equals zero";
         String actual = exception.getMessage();
@@ -91,7 +90,7 @@ class TicketServiceImplTest {
 
         Mockito.when(ticketDAO.findAll(sortedByName)).thenReturn(expectedTickets);
 
-        List<Ticket> actualTickets = ticketService.findAllTickets(sortedByName);
+        List<Ticket> actualTickets = ticketService.findAll(sortedByName);
 
         assertTrue(expectedTickets.containsAll(actualTickets));
     }
@@ -121,7 +120,7 @@ class TicketServiceImplTest {
 
         Mockito.when(ticketDAO.findAll(page)).thenReturn(expectedTickets);
 
-        List<Ticket> actualTickets = ticketService.findAllTickets(page);
+        List<Ticket> actualTickets = ticketService.findAll(page);
 
         assertTrue(expectedTickets.containsAll(actualTickets));
     }
@@ -151,7 +150,7 @@ class TicketServiceImplTest {
 
         Mockito.when(ticketDAO.findAll(sortedByID)).thenReturn(expectedTickets);
 
-        List<Ticket> actualTickets = ticketService.findAllTickets(sortedByID);
+        List<Ticket> actualTickets = ticketService.findAll(sortedByID);
 
         assertTrue(expectedTickets.containsAll(actualTickets));
     }
@@ -174,7 +173,7 @@ class TicketServiceImplTest {
 
         Mockito.when(ticketDAO.findAll(sortedByName)).thenReturn(expectedTickets);
 
-        List<Ticket> actualTickets = ticketService.findAllTickets(sortedByName);
+        List<Ticket> actualTickets = ticketService.findAll(sortedByName);
 
         assertTrue(expectedTickets.containsAll(actualTickets));
     }
@@ -191,7 +190,7 @@ class TicketServiceImplTest {
         );
         Mockito.when(ticketDAO.getById(3002)).thenThrow(DataNotFoundException.class);
 
-        ticketService.saveTicket(newTicket);
+        ticketService.save(newTicket);
 
         Mockito.verify(ticketDAO, Mockito.times(1)).save(newTicket);
     }
@@ -207,7 +206,7 @@ class TicketServiceImplTest {
                 "actual", 2000, 1000
         );
         Throwable exception = assertThrows(ServiceException.class,
-                () -> ticketService.saveTicket(newTicket));
+                () -> ticketService.save(newTicket));
 
         String expected = "id can not be less or equals zero";
         String actual = exception.getMessage();
@@ -233,15 +232,15 @@ class TicketServiceImplTest {
         );
         Mockito.when(ticketDAO.getById(3000)).thenReturn(oldTicket);
 
-        ticketService.saveTicket(updatedTicket);
+        ticketService.save(updatedTicket);
 
-        Mockito.verify(ticketDAO, Mockito.times(1)).update(updatedTicket);
+        Mockito.verify(ticketDAO, Mockito.times(1)).save(updatedTicket);
     }
 
     @Test
     void deleteCategoryById_ShouldDeleteCategoryById_WhenInputIsId() {
 
-        ticketService.deleteTicketById(3000);
+        ticketService.delete(3000);
 
         Mockito.verify(ticketDAO, Mockito.times(1)).delete(3000);
     }
@@ -250,7 +249,7 @@ class TicketServiceImplTest {
     void deleteCategoryById_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
         Throwable exception = assertThrows(ServiceException.class,
-                () -> ticketService.deleteTicketById(-3000));
+                () -> ticketService.delete(-3000));
 
         String expected = "id can not be less or equals zero";
         String actual = exception.getMessage();

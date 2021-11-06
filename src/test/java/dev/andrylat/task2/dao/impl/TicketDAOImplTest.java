@@ -46,7 +46,7 @@ public class TicketDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldReturnTicketById_WhenInputIsId() throws ParseException {
+    public void getById_ShouldReturnTicket_WhenInputIsExistId() throws ParseException {
 
         Date date = getDate("17-02-1992 20:45:00");
         Ticket expectedTicket = getTicket(
@@ -62,13 +62,7 @@ public class TicketDAOImplTest {
     @Test
     public void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() throws ParseException {
 
-        Throwable exception = assertThrows(DataNotFoundException.class,
-                () -> ticketDAO.getById(-1));
-
-        String expected = "There is no such ticket with id = -1";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(DataNotFoundException.class, () -> ticketDAO.getById(-1));
     }
 
     @Test
@@ -227,7 +221,7 @@ public class TicketDAOImplTest {
     }
 
     @Test
-    public void update_ShouldUpdateExistedTicket_WhenInputIsTicketObjectWithDetails() throws ParseException {
+    public void save_ShouldUpdateExistedTicket_WhenInputIsTicketObjectWithDetails() throws ParseException {
 
         Date concertDate = getDate("01-09-2021 22:13:00");
         Ticket updatedTicket = getTicket(
@@ -236,7 +230,7 @@ public class TicketDAOImplTest {
                 "actual", 2000, 1000
         );
 
-        ticketDAO.update(updatedTicket);
+        ticketDAO.save(updatedTicket);
 
         String checkName = "Comedy club";
         String checkUniqueNumber = "111111111";

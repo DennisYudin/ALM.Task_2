@@ -11,17 +11,27 @@ import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.exceptions.ServiceException;
 import dev.andrylat.task2.services.EventService;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Log4j
 @Service
 public class EventServiceImpl implements EventService {
-
-    private static final Logger logger = Logger.getLogger(EventServiceImpl.class);
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String ERROR_MESSAGE_FOR_VALIDATE_METHOD = "id can not be less or equals zero";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such event with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVE_METHOD = "Error during call the method save()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
+    private static final String ERROR_MESSAGE_FOR_GETALLCATEGOIESBYEVENTID_METHOD = "Error during call the method getAllCategoriesByEventId()";
+    private static final String ERROR_MESSAGE_FOR_ADDNEWCATEGORY_METHOD = "Error during call the method addNewCategory()";
+    private static final String ERROR_MESSAGE_FOR_REMOVECATEGORY_METHOD = "Error during call the method removeCategory()";
+    private static final String EMPTY_RESULT_MESSAGE_FOR_GETLOCATIONBYID_METHOD = "There is no such location with id = ";
+    private static final String ERROR_MESSAGE_FOR_FOR_GETLOCATIONBYID_METHOD = "Error during call the method getLocationById()";
 
     @Autowired
     private EventDAO eventDAO;
@@ -36,173 +46,131 @@ public class EventServiceImpl implements EventService {
     private EventMapper eventMapper;
 
     @Override
-    public Event getEventById(long id) {
-        logger.debug("Call method getEventById() with id = " + id);
+    public Event getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         validateId(id);
 
         Event event;
         try {
             event = eventDAO.getById(id);
+            if (log.isDebugEnabled()) {
+                log.debug("Event is " + event);
+            }
+            return event;
         } catch (DataNotFoundException ex) {
-            logger.error("There is no such event with id = " + id);
-            throw new ServiceException("There is no such event with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new ServiceException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DAOException ex) {
-            logger.error("Something went wrong when trying to call the method getEventById()");
-            throw new ServiceException("Something went wrong when trying to call the method getEventById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Event is " + event);
-        }
-        return event;
     }
 
     private void validateId(long id) {
-        logger.debug("Call method validateId() with id = " + id);
+        log.debug("Call method validateId() with id = " + id);
         if (id <= 0) {
-            logger.error("id can not be less or equals zero");
-            throw new ServiceException("id can not be less or equals zero");
+            log.error(ERROR_MESSAGE_FOR_VALIDATE_METHOD);
+            throw new ServiceException(ERROR_MESSAGE_FOR_VALIDATE_METHOD);
         }
     }
 
-
     @Override
-    public List<Event> findAllEvents(Pageable pageable) {
-        logger.debug("Call method findAllEvents()");
+    public List<Event> findAll(Pageable pageable) {
+        log.debug("Call method findAll()");
 
         List<Event> events;
         try {
             events = eventDAO.findAll(pageable);
+            if (log.isDebugEnabled()) {
+                log.debug("Events are " + events);
+            }
+            return events;
         } catch (DAOException ex) {
-            logger.error("Could not get events", ex);
-            throw new ServiceException("Could not get events", ex);
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Events are " + events);
-        }
-        return events;
     }
 
     @Override
-    public void saveEvent(Event event) {
-        logger.debug("Call method saveEvent() for event with id = " + event.getId());
-
-        validate(event);
-    }
-
-    private void validate(Event event) {
-        logger.debug("Call method validate() for event with id = " + event.getId());
+    public void save(Event event) {
+        log.debug("Call method save() for event with id = " + event.getId());
 
         validateId(event.getId());
 
         try {
-            eventDAO.getById(event.getId());
-
-            updateEvent(event);
-        } catch (DataNotFoundException ex) {
-            saveNewEvent(event);
-        } catch (DAOException ex) {
-            throw new ServiceException("Something went wrong when trying to call the method saveEvent()", ex);
-        }
-    }
-
-    private void saveNewEvent(Event event) {
-        logger.debug("Call method saveNewEvent() for event with id = " + event.getId());
-
-        try {
             eventDAO.save(event);
         } catch (DAOException ex) {
-            logger.error("Could not save event with id = " + event.getId(), ex);
-            throw new ServiceException("Could not save event with id = " + event.getId(), ex);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(event + " is added in DB");
-        }
-    }
-
-    private void updateEvent(Event event) {
-        logger.debug("Call method updateEvent() for event with id = " + event.getId());
-
-        try {
-            eventDAO.update(event);
-        } catch (DAOException ex) {
-            logger.error("Could not update event with id = " + event.getId(), ex);
-            throw new ServiceException("Could not update event with id = " + event.getId(), ex);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(event + " is updated in DB");
+            log.error(ERROR_MESSAGE_FOR_SAVE_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_SAVE_METHOD, ex);
         }
     }
 
     @Override
-    public void deleteEventById(long id) {
-        logger.debug("Call method deleteEventById() with event id = " + id);
+    public void delete(long id) {
+        log.debug("Call method delete() with event id = " + id);
 
         validateId(id);
 
         try {
             eventDAO.delete(id);
+            log.debug("Event with id = " + id + " is deleted in DB");
         } catch (DAOException ex) {
-            logger.error("Could not delete event with id = " + id, ex);
-            throw new ServiceException("Could not delete event with id = " + id, ex);
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
-        logger.debug("Event with id = " + id + " is deleted in DB");
     }
 
     @Override
     public List<String> getAllCategoriesByEventId(long id) {
-        logger.debug("Call method getAllCategoriesByEventId() with id = " + id);
+        log.debug("Call method getAllCategoriesByEventId() with id = " + id);
 
         validateId(id);
 
         List<String> categories;
         try {
             categories = eventDAO.getAllCategoriesByEventId(id);
+            if (log.isDebugEnabled()) {
+                log.debug("Categories are " + categories);
+            }
+            return categories;
         } catch (DAOException ex) {
-            logger.error("Could not get categories", ex);
-            throw new ServiceException("Could not get categories", ex);
+            log.error(ERROR_MESSAGE_FOR_GETALLCATEGOIESBYEVENTID_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_GETALLCATEGOIESBYEVENTID_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Categories are " + categories);
-        }
-        return categories;
     }
 
     @Override
     public void addNewCategory(long eventId, long categoryId) {
-        logger.debug("Call method addNewCategory() for " +
+        log.debug("Call method addNewCategory() for " +
                 "event id = " + eventId + " and category id = " + categoryId);
-
         try {
             eventDAO.addNewCategory(eventId, categoryId);
+            log.debug("Category with id = " + categoryId + " is added in DB");
         } catch (DAOException ex) {
-            logger.error("Could not add category with " +
-                    "event id = " + eventId + " and category id = " + categoryId, ex);
-            throw new ServiceException("Could not add category with " +
-                    "event id = " + eventId + " and category id = " + categoryId, ex);
+            log.error(ERROR_MESSAGE_FOR_ADDNEWCATEGORY_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_ADDNEWCATEGORY_METHOD, ex);
         }
-        logger.debug("Category with id = " + categoryId + " is added in DB");
     }
 
     @Override
     public void removeCategory(long eventId, long categoryId) {
-        logger.debug("Call method removeCategory() for " +
+        log.debug("Call method removeCategory() for " +
                 "event id = " + eventId + " and category id = " + categoryId);
-
         try {
             eventDAO.removeCategory(eventId, categoryId);
+            log.debug("Category with id = " + categoryId + " is deleted in DB");
         } catch (DAOException ex) {
-            logger.error("Could not delete category with id = " + categoryId, ex);
-            throw new ServiceException("Could not delete category with id = " + categoryId, ex);
+            log.error(ERROR_MESSAGE_FOR_REMOVECATEGORY_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_REMOVECATEGORY_METHOD, ex);
         }
-        logger.debug("Category with id = " + categoryId + " is deleted in DB");
     }
 
     @Override
     public EventDTO getEventWithDetails(long id) {
-        logger.debug("Call method getEventWithDetails() with id = " + id);
+        log.debug("Call method getEventWithDetails() with id = " + id);
 
-        Event event = getEventById(id);
+        Event event = getById(id);
 
         List<String> categoryNames = getAllCategoriesByEventId(id);
 
@@ -210,29 +178,29 @@ public class EventServiceImpl implements EventService {
 
         EventDTO eventDTO = eventMapper.convertToDTO(event, categoryNames, location);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("EventDTO is " + eventDTO);
+        if (log.isDebugEnabled()) {
+            log.debug("EventDTO is " + eventDTO);
         }
         return eventDTO;
     }
 
     private Location getLocationById(long id) {
-        logger.debug("Call method getLocationById() with id = " + id);
+        log.debug("Call method getLocationById() with id = " + id);
 
         Location location;
         try {
             location = locationDAO.getById(id);
+            if (log.isDebugEnabled()) {
+                log.debug("Location is " + location);
+            }
+            return location;
         } catch (DataNotFoundException ex) {
-            logger.error("There is no such location with id = " + id);
-            throw new ServiceException("There is no such location with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE_FOR_GETLOCATIONBYID_METHOD + id, ex);
+            throw new ServiceException(EMPTY_RESULT_MESSAGE_FOR_GETLOCATIONBYID_METHOD + id, ex);
         } catch (DAOException ex) {
-            logger.error("Something went wrong when trying to call the method getLocationById()");
-            throw new ServiceException("Something went wrong when trying to call the method getLocationById()", ex);
+            log.error(ERROR_MESSAGE_FOR_FOR_GETLOCATIONBYID_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_FOR_GETLOCATIONBYID_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Location is " + location);
-        }
-        return location;
     }
 }
 

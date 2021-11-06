@@ -5,6 +5,7 @@ import dev.andrylat.task2.entities.Ticket;
 import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.mappers.TicketRowMapper;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Date;
 import java.util.List;
 
+@Log4j
 @Repository("ticketDAO")
 public class TicketDAOImpl implements TicketDAO {
     private static final String SQL_SELECT_TICKET_BY_ID = "SELECT * FROM tickets WHERE ticket_id = ?";
@@ -32,7 +34,15 @@ public class TicketDAOImpl implements TicketDAO {
             "SET event_name = ?, unique_number = ?, creation_date = ?, status = ?, user_id = ?, event_id = ? " +
             "WHERE ticket_id = ?";
     private static final String SQL_DELETE_TICKET = "DELETE FROM tickets WHERE ticket_id = ?";
-    private static final String SORT_BY_COLUMN = "event_name";
+
+    private static final String DEFAULT_SORT_BY_COLUMN_NAME = "event_name";
+
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such ticket with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVETICKET_METHOD = "Error during call the method saveTicket()";
+    private static final String ERROR_MESSAGE_FOR_UPDATETICKET_METHOD = "Error during call the method updateTicket()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -46,92 +56,103 @@ public class TicketDAOImpl implements TicketDAO {
 
     @Override
     public Ticket getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         Ticket ticket;
         try {
-            ticket = getTicket(id);
+            ticket = jdbcTemplate.queryForObject(
+                    SQL_SELECT_TICKET_BY_ID,
+                    ticketRowMapper,
+                    id
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("Ticket is " + ticket);
+            }
+            return ticket;
         } catch (EmptyResultDataAccessException ex) {
-            throw new DataNotFoundException(
-                    "There is no such ticket with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new DataNotFoundException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method getById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        return ticket;
-    }
-
-    private Ticket getTicket(long id) {
-        Ticket ticket = jdbcTemplate.queryForObject(
-                SQL_SELECT_TICKET_BY_ID,
-                ticketRowMapper,
-                id
-        );
-        return ticket;
     }
 
     @Override
     public List<Ticket> findAll(Pageable page) {
+        log.debug("Call method findAll()");
 
-        String sqlQuery = getSqlQuery(page);
+        String sqlQuery = buildSqlQuery(page);
 
         List<Ticket> tickets;
         try {
-            tickets = getTickets(sqlQuery);
+            tickets = jdbcTemplate.query(
+                    sqlQuery,
+                    ticketRowMapper
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("Tickets are " + tickets);
+            }
+            return tickets;
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method findAll()", ex);
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        return tickets;
-    }
-
-    private List<Ticket> getTickets(String query) {
-        List<Ticket> tickets = jdbcTemplate.query(
-                query,
-                ticketRowMapper
-        );
-        return tickets;
-    }
-
-    private String getSqlQuery(Pageable pageable) {
-        String query = SQL_SELECT_ALL_TICKETS_ORDER_BY_EVENT_NAME;
-        if (pageable != null) {
-            query = buildSqlQuery(pageable);
-        }
-        return query;
     }
 
     private String buildSqlQuery(Pageable pageable) {
-        String query;
-        if (pageable.getSort().isEmpty()) {
-            Sort.Order order = Sort.Order.by(SORT_BY_COLUMN);
+        log.debug("Call method buildSqlQuery()");
 
-            query = collectSqlQuery(pageable, order);
-        } else {
-            Sort.Order order = pageable.getSort().iterator().next();
-
-            query = collectSqlQuery(pageable, order);
+        String query = SQL_SELECT_ALL_TICKETS_ORDER_BY_EVENT_NAME;
+        if (pageable != null) {
+            query = buildSqlQueryWithPageable(pageable);
         }
+        log.debug("SQL query is " + query);
+        return query;
+    }
+
+    private String buildSqlQueryWithPageable(Pageable pageable) {
+        log.debug("Call method buildSqlQueryWithPageable()");
+
+        Sort.Order order;
+        if (pageable.getSort().isEmpty()) {
+            order = Sort.Order.by(DEFAULT_SORT_BY_COLUMN_NAME);
+        } else {
+            order = pageable.getSort().iterator().next();
+        }
+        String query = collectSqlQuery(pageable, order);
+
         return query;
     }
 
     private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
+        log.debug("Call method collectSqlQuery()");
 
         String sortProperty = sort.getProperty();
         String sortDirectionName = sort.getDirection().name();
-        String limit = "LIMIT";
         int pageSize = pageable.getPageSize();
-        String offset = "OFFSET";
         long pageOffset = pageable.getOffset();
 
         String result = String.format(
-                SQL_SELECT_ALL_TICKETS_ORDER_BY + " %1$s %2$s %3$s %4$d %5$s %6$d",
-                sortProperty, sortDirectionName, limit, pageSize, offset, pageOffset);
+                SQL_SELECT_ALL_TICKETS_ORDER_BY + " %1$s %2$s LIMIT %3$s OFFSET %4$d",
+                sortProperty, sortDirectionName, pageSize, pageOffset);
 
         return result;
     }
 
     @Override
     public void save(Ticket ticket) {
+        log.debug("Call method save() for ticket with id = " + ticket.getId());
+
+        if (doesExist(ticket.getId())) {
+            updateTicket(ticket);
+        } else {
+            saveTicket(ticket);
+        }
+    }
+
+    public void saveTicket(Ticket ticket) {
+        log.debug("Call method saveTicket() for ticket with id = " + ticket.getId());
 
         long id = ticket.getId();
         String eventName = ticket.getEventName();
@@ -147,13 +168,13 @@ public class TicketDAOImpl implements TicketDAO {
                     id, eventName, uniqueNumber, date, status, userId, eventId
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method save()", ex);
+            log.error(ERROR_MESSAGE_FOR_SAVETICKET_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_SAVETICKET_METHOD, ex);
         }
     }
 
-    @Override
-    public void update(Ticket ticket) {
+    public void updateTicket(Ticket ticket) {
+        log.debug("Call method updateTicket() for ticket with id = " + ticket.getId());
 
         long id = ticket.getId();
         String eventName = ticket.getEventName();
@@ -169,21 +190,22 @@ public class TicketDAOImpl implements TicketDAO {
                     eventName, uniqueNumber, date, status, userId, eventId, id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method update()", ex);
+            log.error(ERROR_MESSAGE_FOR_UPDATETICKET_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_UPDATETICKET_METHOD, ex);
         }
     }
 
     @Override
     public void delete(long id) {
+        log.debug("Call method delete() for ticket with id = " + id);
         try {
             jdbcTemplate.update(
                     SQL_DELETE_TICKET,
                     id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method delete()", ex);
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
     }
 }

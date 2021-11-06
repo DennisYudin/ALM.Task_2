@@ -33,7 +33,7 @@ class LocationServiceImplTest {
     }
 
     @Test
-    void getLocationById_ShouldReturnLocationById_WhenInputIsId() {
+    void getById_ShouldReturnLocation_WhenInputIsExistId() {
 
         Location expectedLocation = getLocation(
                 100, "Drunk oyster",
@@ -42,27 +42,21 @@ class LocationServiceImplTest {
 
         Mockito.when(locationDAO.getById(100)).thenReturn(expectedLocation);
 
-        Location actualLocation = locationService.getLocationById(100);
+        Location actualLocation = locationService.getById(100);
 
         assertEquals(expectedLocation, actualLocation);
     }
 
     @Test
-    void getLocationById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
+    void getById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
 
         Mockito.when(locationDAO.getById(-1)).thenThrow(ServiceException.class);
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> locationService.getLocationById(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> locationService.getById(-1));
     }
 
     @Test
-    void findAllLocations_ShouldReturnAllLocationsSortedByName_WhenInputIsPageRequestWithoutSortValue() {
+    void findAll_ShouldReturnAllLocationsSortedByName_WhenInputIsPageRequestWithoutSortValue() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -83,13 +77,13 @@ class LocationServiceImplTest {
 
         Mockito.when(locationDAO.findAll(sortedByName)).thenReturn(expectedLocations);
 
-        List<Location> actualLocations = locationService.findAllLocations(sortedByName);
+        List<Location> actualLocations = locationService.findAll(sortedByName);
 
         assertTrue(expectedLocations.containsAll(actualLocations));
     }
 
     @Test
-    void findAllLocations_ShouldReturnOneLocationSortedByName_WhenInputIsPageRequestWithSizeOneWithoutSortValue() {
+    void findAll_ShouldReturnOneLocationSortedByName_WhenInputIsPageRequestWithSizeOneWithoutSortValue() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -104,13 +98,13 @@ class LocationServiceImplTest {
 
         Mockito.when(locationDAO.findAll(sortedByName)).thenReturn(expectedLocations);
 
-        List<Location> actualLocations = locationService.findAllLocations(sortedByName);
+        List<Location> actualLocations = locationService.findAll(sortedByName);
 
         assertTrue(expectedLocations.containsAll(actualLocations));
     }
 
     @Test
-    void findAllLocations_ShouldReturnAllLocationsSortedByLocationId_WhenInputIsPageRequestWithSortValue() {
+    void findAll_ShouldReturnAllLocationsSortedByLocationId_WhenInputIsPageRequestWithSortValue() {
 
         Pageable sortedById = PageRequest.of(0, 2, Sort.by("location_id"));
 
@@ -131,13 +125,13 @@ class LocationServiceImplTest {
 
         Mockito.when(locationDAO.findAll(sortedById)).thenReturn(expectedLocations);
 
-        List<Location> actualLocations = locationService.findAllLocations(sortedById);
+        List<Location> actualLocations = locationService.findAll(sortedById);
 
         assertTrue(expectedLocations.containsAll(actualLocations));
     }
 
     @Test
-    void findAllLocations_ShouldGetAllCategoriesSortedByName_WhenPageIsNull() {
+    void findAll_ShouldGetAllCategoriesSortedByName_WhenPageIsNull() {
 
         Pageable page = null;
 
@@ -158,13 +152,13 @@ class LocationServiceImplTest {
 
         Mockito.when(locationDAO.findAll(page)).thenReturn(expectedLocations);
 
-        List<Location> actualLocations = locationService.findAllLocations(page);
+        List<Location> actualLocations = locationService.findAll(page);
 
         assertTrue(expectedLocations.containsAll(actualLocations));
     }
 
     @Test
-    void saveLocation_ShouldSaveNewLocation_WhenInputIsNewLocationWithDetails() {
+    void save_ShouldSaveNewLocation_WhenInputIsNewLocationWithDetails() {
 
         Location newLocation = getLocation(
                 102, "Green sleeve",
@@ -174,13 +168,13 @@ class LocationServiceImplTest {
         );
         Mockito.when(locationDAO.getById(102)).thenThrow(DataNotFoundException.class);
 
-        locationService.saveLocation(newLocation);
+        locationService.save(newLocation);
 
         Mockito.verify(locationDAO, Mockito.times(1)).save(newLocation);
     }
 
     @Test
-    void saveLocation_ShouldThrowServiceException_WhenInputIsHasNegativeId() {
+    void save_ShouldThrowServiceException_WhenInputIsHasNegativeId() {
 
         Location newLocation = getLocation(
                 -102, "Green sleeve",
@@ -188,17 +182,11 @@ class LocationServiceImplTest {
                 "Derzhavina str., 13", "The first Irish pub in the city",
                 1200
         );
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> locationService.saveLocation(newLocation));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> locationService.save(newLocation));
     }
 
     @Test
-    void saveLocation_ShouldUpdateExistedLocation_WhenInputIsLocationWithDetails() {
+    void save_ShouldUpdateExistedLocation_WhenInputIsLocationWithDetails() {
 
         Location oldLocation = getLocation(
                 100, "Drunk oyster",
@@ -213,29 +201,23 @@ class LocationServiceImplTest {
         );
         Mockito.when(locationDAO.getById(100)).thenReturn(oldLocation);
 
-        locationService.saveLocation(updatedLocation);
+        locationService.save(updatedLocation);
 
-        Mockito.verify(locationDAO, Mockito.times(1)).update(updatedLocation);
+        Mockito.verify(locationDAO, Mockito.times(1)).save(updatedLocation);
     }
 
     @Test
-    void deleteLocationById_ShouldDeleteLocationById_WhenInputIsId() {
+    void delete_ShouldDeleteLocationById_WhenInputIsId() {
 
-        locationService.deleteLocationById(100);
+        locationService.delete(100);
 
         Mockito.verify(locationDAO, Mockito.times(1)).delete(100);
     }
 
     @Test
-    void deleteLocationById_ShouldThrowServiceException_WhenInputHasNegativeId() {
+    void delete_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> locationService.deleteLocationById(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> locationService.delete(-1));
     }
 
     private Location getLocation(long id, String name,

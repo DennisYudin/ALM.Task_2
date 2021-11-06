@@ -5,6 +5,7 @@ import dev.andrylat.task2.entities.Location;
 import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.mappers.LocationRowMapper;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Log4j
 @Repository("locationDAO")
 public class LocationDAOImpl implements LocationDAO {
     private static final String SQL_SELECT_LOCATION_BY_ID = "SELECT * FROM locations WHERE location_id = ?";
@@ -31,7 +33,15 @@ public class LocationDAOImpl implements LocationDAO {
     private static final String SQL_DELETE_LOCATION = "" +
             "DELETE FROM locations " +
             "WHERE location_id = ?";
-    private static final String SORT_BY_COLUMN = "name";
+
+    private static final String DEFAULT_SORT_BY_COLUMN_NAME = "name";
+
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such location with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVELOCATION_METHOD = "Error during call the method saveLocation()";
+    private static final String ERROR_MESSAGE_FOR_UPDATELOCATION_METHOD = "Error during call the method updateLocation()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -45,92 +55,103 @@ public class LocationDAOImpl implements LocationDAO {
 
     @Override
     public Location getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         Location location;
         try {
-            location = getLocation(id);
+            location = jdbcTemplate.queryForObject(
+                    SQL_SELECT_LOCATION_BY_ID,
+                    locationRowMapper,
+                    id
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("Location is " + location);
+            }
+            return location;
         } catch (EmptyResultDataAccessException ex) {
-            throw new DataNotFoundException(
-                    "There is no such location with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new DataNotFoundException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method getById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        return location;
-    }
-
-    private Location getLocation(long id) {
-        Location location = jdbcTemplate.queryForObject(
-                SQL_SELECT_LOCATION_BY_ID,
-                locationRowMapper,
-                id
-        );
-        return location;
     }
 
     @Override
     public List<Location> findAll(Pageable page) {
+        log.debug("Call method findAll()");
 
-        String sqlQuery = getSqlQuery(page);
+        String sqlQuery = buildSqlQuery(page);
 
         List<Location> locations;
         try {
-            locations = getLocations(sqlQuery);
+            locations = jdbcTemplate.query(
+                    sqlQuery,
+                    locationRowMapper
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("Locations are " + locations);
+            }
+            return locations;
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method findAll()", ex);
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        return locations;
-    }
-
-    private List<Location> getLocations(String query) {
-        List<Location> locations = jdbcTemplate.query(
-                query,
-                locationRowMapper
-        );
-        return locations;
-    }
-
-    private String getSqlQuery(Pageable pageable) {
-        String query = SQL_SELECT_ALL_LOCATIONS_ORDER_BY_NAME;
-        if (pageable != null) {
-            query = buildSqlQuery(pageable);
-        }
-        return query;
     }
 
     private String buildSqlQuery(Pageable pageable) {
-        String query;
-        if (pageable.getSort().isEmpty()) {
-            Sort.Order order = Sort.Order.by(SORT_BY_COLUMN);
+        log.debug("Call method buildSqlQuery()");
 
-            query = collectSqlQuery(pageable, order);
-        } else {
-            Sort.Order order = pageable.getSort().iterator().next();
-
-            query = collectSqlQuery(pageable, order);
+        String query = SQL_SELECT_ALL_LOCATIONS_ORDER_BY_NAME;
+        if (pageable != null) {
+            query = buildSqlQueryWithPageable(pageable);
         }
+        log.debug("SQL query is " + query);
+        return query;
+    }
+
+    private String buildSqlQueryWithPageable(Pageable pageable) {
+        log.debug("Call method buildSqlQueryWithPageable()");
+
+        Sort.Order order;
+        if (pageable.getSort().isEmpty()) {
+            order = Sort.Order.by(DEFAULT_SORT_BY_COLUMN_NAME);
+        } else {
+            order = pageable.getSort().iterator().next();
+        }
+        String query = collectSqlQuery(pageable, order);
+
         return query;
     }
 
     private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
+        log.debug("Call method collectSqlQuery()");
 
         String sortProperty = sort.getProperty();
         String sortDirectionName = sort.getDirection().name();
-        String limit = "LIMIT";
         int pageSize = pageable.getPageSize();
-        String offset = "OFFSET";
         long pageOffset = pageable.getOffset();
 
         String result = String.format(
-                SQL_SELECT_ALL_LOCATIONS_ORDER_BY + " %1$s %2$s %3$s %4$d %5$s %6$d",
-                sortProperty, sortDirectionName, limit, pageSize, offset, pageOffset);
+                SQL_SELECT_ALL_LOCATIONS_ORDER_BY + " %1$s %2$s LIMIT %3$s OFFSET %4$d",
+                sortProperty, sortDirectionName, pageSize, pageOffset);
 
         return result;
     }
 
     @Override
     public void save(Location location) {
+        log.debug("Call method save() for location with id = " + location.getId());
+
+        if (doesExist(location.getId())) {
+            updateLocation(location);
+        } else {
+            saveLocation(location);
+        }
+    }
+
+    public void saveLocation(Location location) {
+        log.debug("Call method saveLocation() for location with id = " + location.getId());
 
         long id = location.getId();
         String name = location.getTitle();
@@ -146,13 +167,14 @@ public class LocationDAOImpl implements LocationDAO {
                     id, name, workingHours, type, address, description, capacityPeople
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method save()", ex);
+            log.error(ERROR_MESSAGE_FOR_SAVELOCATION_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_SAVELOCATION_METHOD, ex);
         }
     }
 
-    @Override
-    public void update(Location location) {
+
+    public void updateLocation(Location location) {
+        log.debug("Call method updateLocation() for location with id = " + location.getId());
 
         long id = location.getId();
         String name = location.getTitle();
@@ -168,21 +190,22 @@ public class LocationDAOImpl implements LocationDAO {
                     name, workingHours, type, address, description, capacityPeople, id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method update()", ex);
+            log.error(ERROR_MESSAGE_FOR_UPDATELOCATION_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_UPDATELOCATION_METHOD, ex);
         }
     }
 
     @Override
     public void delete(long id) {
+        log.debug("Call method delete() for location with id = " + id);
         try {
             jdbcTemplate.update(
                     SQL_DELETE_LOCATION,
                     id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method delete()", ex);
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
     }
 }

@@ -33,33 +33,27 @@ class CategoryServiceImplTest {
     }
 
     @Test
-    void getCategoryById_ShouldReturnCategoryById_WhenInputIsId() {
+    void getById_ShouldReturnCategory_WhenInputIsExistId() {
 
         Category expectedCategory = getCategory(1, "exhibition");
 
         Mockito.when(categoryDAO.getById(1)).thenReturn(expectedCategory);
 
-        Category actualCategory = categoryService.getCategoryById(1);
+        Category actualCategory = categoryService.getById(1);
 
         assertEquals(expectedCategory, actualCategory);
     }
 
     @Test
-    void getCategoryById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
+    void getById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
 
         Mockito.when(categoryDAO.getById(-1)).thenThrow(ServiceException.class);
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> categoryService.getCategoryById(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> categoryService.getById(-1));
     }
 
     @Test
-    void findAllCategories_ShouldReturnAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSortValue() {
+    void findAll_ShouldReturnAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSortValue() {
 
         Pageable sortedByName = PageRequest.of(0, 4);
 
@@ -72,13 +66,13 @@ class CategoryServiceImplTest {
 
         Mockito.when(categoryDAO.findAll(sortedByName)).thenReturn(expectedCategoryNames);
 
-        List<Category> actualCategories = categoryService.findAllCategories(sortedByName);
+        List<Category> actualCategories = categoryService.findAll(sortedByName);
 
         assertTrue(expectedCategoryNames.containsAll(actualCategories));
     }
 
     @Test
-    void findAllCategories_ShouldReturnTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSortValue() {
+    void findAll_ShouldReturnTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSortValue() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -89,14 +83,14 @@ class CategoryServiceImplTest {
 
         Mockito.when(categoryDAO.findAll(sortedByName)).thenReturn(expectedCategoryNames);
 
-        List<Category> actualCategories = categoryService.findAllCategories(sortedByName);
+        List<Category> actualCategories = categoryService.findAll(sortedByName);
 
         assertTrue(expectedCategoryNames.containsAll(actualCategories));
 
     }
 
     @Test
-    void findAllCategories_ShouldReturnAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
+    void findAll_ShouldReturnAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
 
         Pageable sortedById = PageRequest.of(0, 4, Sort.by("category_id"));
 
@@ -109,13 +103,13 @@ class CategoryServiceImplTest {
 
         Mockito.when(categoryDAO.findAll(sortedById)).thenReturn(expectedCategoryNames);
 
-        List<Category> actualCategories = categoryService.findAllCategories(sortedById);
+        List<Category> actualCategories = categoryService.findAll(sortedById);
 
         assertTrue(expectedCategoryNames.containsAll(actualCategories));
     }
 
     @Test
-    void findAllCategories_ShouldReturnAllCategoriesSortedByName_WhenPageIsNull() {
+    void findAll_ShouldReturnAllCategoriesSortedByName_WhenPageIsNull() {
 
         Pageable page = null;
 
@@ -128,68 +122,56 @@ class CategoryServiceImplTest {
 
         Mockito.when(categoryDAO.findAll(page)).thenReturn(expectedCategoryNames);
 
-        List<Category> actualCategories = categoryService.findAllCategories(page);
+        List<Category> actualCategories = categoryService.findAll(page);
 
         assertTrue(expectedCategoryNames.containsAll(actualCategories));
     }
 
     @Test
-    void saveCategory_ShouldSaveNewCategory_WhenInputIsNewCategoryWithIdAndName() {
+    void save_ShouldSaveNewCategory_WhenInputIsNewCategoryWithIdAndName() {
 
         Category newCategory = getCategory(5, "opera");
 
         Mockito.when(categoryDAO.getById(5)).thenThrow(DataNotFoundException.class);
 
-        categoryService.saveCategory(newCategory);
+        categoryService.save(newCategory);
 
         Mockito.verify(categoryDAO, Mockito.times(1)).save(newCategory);
     }
 
     @Test
-    void saveCategory_ShouldThrowServiceException_WhenInputIsHasNegativeId() {
+    void save_ShouldThrowServiceException_WhenInputIsHasNegativeId() {
 
         Category newCategory = getCategory(-1, "opera");
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> categoryService.saveCategory(newCategory));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> categoryService.save(newCategory));
     }
 
     @Test
-    void saveCategory_ShouldUpdateExistedCategory_WhenInputIsCategoryWithDetails() {
+    void save_ShouldUpdateExistedCategory_WhenInputIsCategoryWithDetails() {
 
         Category oldCategory = getCategory(1, "exhibition");
         Category updatedCategory = getCategory(1, "opera");
 
         Mockito.when(categoryDAO.getById(1)).thenReturn(oldCategory);
 
-        categoryService.saveCategory(updatedCategory);
+        categoryService.save(updatedCategory);
 
-        Mockito.verify(categoryDAO, Mockito.times(1)).update(updatedCategory);
+        Mockito.verify(categoryDAO, Mockito.times(1)).save(updatedCategory);
     }
 
     @Test
-    void deleteCategoryById_ShouldDeleteCategoryById_WhenInputIsId() {
+    void delete_ShouldDeleteCategoryById_WhenInputIsId() {
 
-        categoryService.deleteCategoryById(1);
+        categoryService.delete(1);
 
         Mockito.verify(categoryDAO, Mockito.times(1)).delete(1);
     }
 
     @Test
-    void deleteCategoryById_ShouldThrowServiceException_WhenInputHasNegativeId() {
+    void delete_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> categoryService.deleteCategoryById(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class,() -> categoryService.delete(-1));
     }
 
     private Category getCategory(long id, String title) {

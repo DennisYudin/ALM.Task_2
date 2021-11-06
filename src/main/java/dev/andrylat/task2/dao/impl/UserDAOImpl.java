@@ -5,6 +5,7 @@ import dev.andrylat.task2.entities.User;
 import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.mappers.UserRowMapper;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
 
+@Log4j
 @Repository("userDAO")
 public class UserDAOImpl implements UserDAO {
     private static final String SQL_SELECT_USER_BY_ID = "SELECT * FROM users WHERE user_id = ?";
@@ -43,7 +45,19 @@ public class UserDAOImpl implements UserDAO {
             "FROM event_subscriptions " +
             "WHERE user_id = ? AND event_id = ?";
     private static final String SQL_SELECT_EVENT_NAME_BY_ID = "SELECT name FROM events WHERE event_id = ?";
-    private static final String SORT_BY_COLUMN = "name";
+
+    private static final String DEFAULT_SORT_BY_COLUMN_NAME = "name";
+
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such user with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVEUSER_METHOD = "Error during call the method saveUser()";
+    private static final String ERROR_MESSAGE_FOR_UPDATEUSER_METHOD = "Error during call the method updateUser()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
+    private static final String ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD = "Error during call the method convertToNames()";
+    private static final String ERROR_MESSAGE_FOR_GETEVENTIDS_METHOD = "Error during call the method getEventIDs()";
+    private static final String ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD = "Error during call the method addNewEvent()";
+    private static final String ERROR_MESSAGE_FOR_REMOVEEVENT_METHOD = "Error during call the method removeEvent()";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -57,92 +71,103 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public User getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         User user;
         try {
-            user = getUser(id);
+            user = jdbcTemplate.queryForObject(
+                    SQL_SELECT_USER_BY_ID,
+                    userRowMapper,
+                    id
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("User is " + user);
+            }
+            return user;
         } catch (EmptyResultDataAccessException ex) {
-            throw new DataNotFoundException(
-                    "There is no such user with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new DataNotFoundException(EMPTY_RESULT_MESSAGE, ex);
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method getById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        return user;
-    }
-
-    private User getUser(long id) {
-        User user = jdbcTemplate.queryForObject(
-                SQL_SELECT_USER_BY_ID,
-                userRowMapper,
-                id
-        );
-        return user;
     }
 
     @Override
     public List<User> findAll(Pageable page) {
+        log.debug("Call method findAll()");
 
-        String sqlQuery = getSqlQuery(page);
+        String sqlQuery = buildSqlQuery(page);
 
         List<User> users;
         try {
-            users = getUsers(sqlQuery);
+            users = jdbcTemplate.query(
+                    sqlQuery,
+                    userRowMapper
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("Users are " + users);
+            }
+            return users;
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method findAll()", ex);
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        return users;
-    }
-
-    private List<User> getUsers(String query) {
-        List<User> users = jdbcTemplate.query(
-                query,
-                userRowMapper
-        );
-        return users;
-    }
-
-    private String getSqlQuery(Pageable pageable) {
-        String query = SQL_SELECT_ALL_USERS_ORDER_BY_NAME;
-        if (pageable != null) {
-            query = buildSqlQuery(pageable);
-        }
-        return query;
     }
 
     private String buildSqlQuery(Pageable pageable) {
-        String query;
-        if (pageable.getSort().isEmpty()) {
-            Sort.Order order = Sort.Order.by(SORT_BY_COLUMN);
+        log.debug("Call method buildSqlQuery()");
 
-            query = collectSqlQuery(pageable, order);
-        } else {
-            Sort.Order order = pageable.getSort().iterator().next();
-
-            query = collectSqlQuery(pageable, order);
+        String query = SQL_SELECT_ALL_USERS_ORDER_BY_NAME;
+        if (pageable != null) {
+            query = buildSqlQueryWithPageable(pageable);
         }
+        log.debug("SQL query is " + query);
+        return query;
+    }
+
+    private String buildSqlQueryWithPageable(Pageable pageable) {
+        log.debug("Call method buildSqlQueryWithPageable()");
+
+        Sort.Order order;
+        if (pageable.getSort().isEmpty()) {
+            order = Sort.Order.by(DEFAULT_SORT_BY_COLUMN_NAME);
+        } else {
+            order = pageable.getSort().iterator().next();
+        }
+        String query = collectSqlQuery(pageable, order);
+
         return query;
     }
 
     private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
+        log.debug("Call method collectSqlQuery()");
 
         String sortProperty = sort.getProperty();
         String sortDirectionName = sort.getDirection().name();
-        String limit = "LIMIT";
         int pageSize = pageable.getPageSize();
-        String offset = "OFFSET";
         long pageOffset = pageable.getOffset();
 
         String result = String.format(
-                SQL_SELECT_ALL_USERS_ORDER_BY + " %1$s %2$s %3$s %4$d %5$s %6$d",
-                sortProperty, sortDirectionName, limit, pageSize, offset, pageOffset);
+                SQL_SELECT_ALL_USERS_ORDER_BY + " %1$s %2$s LIMIT %3$s OFFSET %4$d",
+                sortProperty, sortDirectionName, pageSize, pageOffset);
 
         return result;
     }
 
     @Override
     public void save(User user) {
+        log.debug("Call method save() for user with id = " + user.getId());
+
+        if (doesExist(user.getId())) {
+            updateUser(user);
+        } else {
+            saveUser(user);
+        }
+    }
+
+    public void saveUser(User user) {
+        log.debug("Call method saveUser()");
 
         long id = user.getId();
         String name = user.getName();
@@ -158,13 +183,13 @@ public class UserDAOImpl implements UserDAO {
                     id, name, surname, email, login, password, type
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method save()", ex);
+            log.error(ERROR_MESSAGE_FOR_SAVEUSER_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_SAVEUSER_METHOD, ex);
         }
     }
 
-    @Override
-    public void update(User user) {
+    public void updateUser(User user) {
+        log.debug("Call method updateUser() for user with id = " + user.getId());
 
         long id = user.getId();
         String name = user.getName();
@@ -180,47 +205,55 @@ public class UserDAOImpl implements UserDAO {
                     name, surname, email, login, password, type, id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method update()", ex);
+            log.error(ERROR_MESSAGE_FOR_UPDATEUSER_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_UPDATEUSER_METHOD, ex);
         }
     }
 
     @Override
     public void delete(long id) {
+        log.debug("Call method delete() for user with id = " + id);
         try {
             jdbcTemplate.update(
                     SQL_DELETE_USER,
                     id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method delete()", ex);
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
     }
 
     @Override
     public List<String> getAllEventsByUserId(long id) {
+        log.debug("Call method getAllEventsByUserId() for user with id = " + id);
 
         List<Long> eventIDs = getEventIDs(id);
 
         List<String> events = convertToNames(eventIDs);
 
+        if (log.isDebugEnabled()) {
+            log.debug("Events are " + events);
+        }
         return events;
     }
 
     private List<String> convertToNames(List<Long> input) {
+        log.debug("Call method convertToNames()");
+
         List<String> names;
         try {
             names = getEventNames(input);
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong in the process of receiving event names " +
-                            "when trying to call the method convertToNames()", ex);
+            log.error(ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD, ex);
         }
         return names;
     }
 
     private List<Long> getEventIDs(long id) {
+        log.debug("Call method getEventIDs()");
+
         List<Long> dataIDs;
         try {
             dataIDs = jdbcTemplate.queryForList(
@@ -228,15 +261,15 @@ public class UserDAOImpl implements UserDAO {
                     Long.class,
                     id
             );
+            return dataIDs;
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong in the process of receiving IDs " +
-                            "when trying to call the method getEventIDs()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETEVENTIDS_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_GETEVENTIDS_METHOD, ex);
         }
-        return dataIDs;
     }
 
     private List<String> getEventNames(List<Long> inputData) {
+        log.debug("Call method getEventNames()");
 
         List<String> result = new ArrayList<>();
         for (long id : inputData) {
@@ -252,27 +285,31 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void addNewEvent(long userId, long eventId) {
+        log.debug("Call method addNewEvent()");
+
         try {
             jdbcTemplate.update(
                     SQL_ADD_NEW_EVENT,
                     userId, eventId
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method addNewEvent()", ex);
+            log.error(ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD, ex);
         }
     }
 
     @Override
     public void removeEvent(long userId, long eventId) {
+        log.debug("Call method removeEvent()");
+
         try {
             jdbcTemplate.update(
                     SQL_DELETE_EVENT,
                     userId, eventId
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method removeEvent()", ex);
+            log.error(ERROR_MESSAGE_FOR_REMOVEEVENT_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_REMOVEEVENT_METHOD, ex);
         }
     }
 }

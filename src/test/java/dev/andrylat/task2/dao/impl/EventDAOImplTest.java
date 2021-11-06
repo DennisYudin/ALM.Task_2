@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class EventDAOImplTest {
+class EventDAOImplTest {
     private static final String SQL_SELECT_EVENT_ID = "" +
             "SELECT event_id " +
             "FROM events " +
@@ -52,7 +52,7 @@ public class EventDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldReturnEventById_WhenInputIsId() throws ParseException {
+    void getById_ShouldReturnEvent_WhenInputIsExistIdValue() throws ParseException {
 
         Date date = getDate("13-08-2021 18:23:00");
         Event expectedEvent = getEvent(
@@ -66,19 +66,13 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void getById_ShouldThrowDataNotFoundException_WhenInputIsDoesNotExistId() throws ParseException {
+    void getById_ShouldThrowDataNotFoundException_WhenInputIsDoesNotExistId() throws ParseException {
 
-        Throwable exception = assertThrows(DataNotFoundException.class,
-                () -> eventDAO.getById(-1000));
-
-        String expected = "There is no such event with id = -1000";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(DataNotFoundException.class, () -> eventDAO.getById(-1000));
     }
 
     @Test
-    public void findAll_ShouldReturnAllEventsSortedByName_WhenInputIsPageRequestWithoutSort() throws ParseException {
+    void findAll_ShouldReturnAllEventsSortedByName_WhenInputIsPageRequestWithoutSort() throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -112,7 +106,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldReturnAllEventsSortedByEventId_WhenInputIsPageRequestWithSort() throws ParseException {
+    void findAll_ShouldReturnAllEventsSortedByEventId_WhenInputIsPageRequestWithSort() throws ParseException {
 
         Pageable sortedById = PageRequest.of(0, 2, Sort.by("event_id"));
 
@@ -144,7 +138,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldReturnOneEventSortedByName_WhenInputIsPageRequestWithPageSizeOneWithoutSortValue()
+    void findAll_ShouldReturnOneEventSortedByName_WhenInputIsPageRequestWithPageSizeOneWithoutSortValue()
             throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 1);
@@ -170,7 +164,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldReturnAllEventsSortedByName_WhenPageIsNull() throws ParseException {
+    void findAll_ShouldReturnAllEventsSortedByName_WhenPageIsNull() throws ParseException {
 
         Pageable page = null;
 
@@ -202,7 +196,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void save_ShouldSaveEvent_WhenInputIsEventObjectWithDetails() throws ParseException {
+    void save_ShouldSaveEvent_WhenInputIsEventObjectWithDetails() throws ParseException {
 
         Date concertDate = getDate("17-02-1992 16:30:00");
         Event event = getEvent(
@@ -224,16 +218,16 @@ public class EventDAOImplTest {
         long expectedId = 1002;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_EVENT_ID,
-                new Object[]{checkName, checkDate, checkPrice,
-                        checkStatus, checkDesc, checkForeignKey},
-                Long.class
+                Long.class,
+                checkName, checkDate, checkPrice,
+                checkStatus, checkDesc, checkForeignKey
         );
         assertEquals(expectedId, actualId);
     }
 
 
     @Test
-    public void update_ShouldUpdateExistedEvent_WhenInputIsEventObjectWithDetails() throws ParseException {
+    void save_ShouldUpdateExistedEvent_WhenInputIsEventObjectWithDetails() throws ParseException {
 
 
         Date date = getDate("17-02-1992 16:30:00");
@@ -244,7 +238,7 @@ public class EventDAOImplTest {
                 100
         );
 
-        eventDAO.update(updatedEvent);
+        eventDAO.save(updatedEvent);
 
         String checkName = "Leonid Agutin";
         Date checkDate = date;
@@ -256,15 +250,15 @@ public class EventDAOImplTest {
         long expectedId = 1000;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_EVENT_ID,
-                new Object[]{checkName, checkDate, checkPrice,
-                        checkStatus, checkDesc, checkForeignKey},
-                Long.class
+                Long.class,
+                checkName, checkDate, checkPrice,
+                        checkStatus, checkDesc, checkForeignKey
         );
         assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void delete_ShouldDeleteEventById_WhenInputIsId() {
+    void delete_ShouldDeleteEventById_WhenInputIsId() {
 
         long eventId = 1000;
 
@@ -285,7 +279,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void getAllCategoriesByEventId_ShouldReturnAllCategories_WhenInputIsEventId() {
+    void getAllCategoriesByEventId_ShouldReturnAllCategories_WhenInputIsEventId() {
 
         long id = 1000;
 
@@ -304,7 +298,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void addNewCategory_ShouldAddNewCategory_WhenInputIsEventIdAndCategoryId() {
+    void addNewCategory_ShouldAddNewCategory_WhenInputIsEventIdAndCategoryId() {
 
         long eventId = 1001;
         long categoryId = 1;
@@ -324,7 +318,7 @@ public class EventDAOImplTest {
     }
 
     @Test
-    public void removeCategory_ShouldDeleteCategory_WhenInputIsEventIdAndCategoryId() {
+    void removeCategory_ShouldDeleteCategory_WhenInputIsEventIdAndCategoryId() {
 
         long eventId = 1000;
         long categoryId = 1;

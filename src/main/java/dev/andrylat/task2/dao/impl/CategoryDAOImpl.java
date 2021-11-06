@@ -5,6 +5,7 @@ import dev.andrylat.task2.entities.Category;
 import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.mappers.CategoryRowMapper;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Log4j
 @Repository("categoryDAO")
 public class CategoryDAOImpl implements CategoryDAO {
     private static final String SQL_SELECT_CATEGORY_BY_ID = "SELECT * FROM categories WHERE category_id = ?";
@@ -23,7 +25,15 @@ public class CategoryDAOImpl implements CategoryDAO {
     private static final String SQL_SAVE_CATEGORY = "INSERT INTO categories (category_id, name) VALUES (?, ?)";
     private static final String SQL_UPDATE_CATEGORY = "UPDATE categories SET name = ? WHERE category_id = ?";
     private static final String SQL_DELETE_CATEGORY = "DELETE FROM categories WHERE category_id = ?";
-    private static final String SORT_BY_COLUMN = "name";
+
+    private static final String DEFAULT_SORT_BY_COLUMN_NAME = "name";
+
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such category with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVECATEGORY_METHOD = "Error during call the method saveCategory()";
+    private static final String ERROR_MESSAGE_FOR_UPDATECATEGORY_METHOD = "Error during call the method updateCategory()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -37,109 +47,119 @@ public class CategoryDAOImpl implements CategoryDAO {
 
     @Override
     public Category getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         Category category;
         try {
-            category = getCategory(id);
+            category = jdbcTemplate.queryForObject(
+                    SQL_SELECT_CATEGORY_BY_ID,
+                    categoryRowMapper,
+                    id
+            );
+            if (log.isDebugEnabled()) {
+                log.debug("Category is " + category);
+            }
+            return category;
         } catch (EmptyResultDataAccessException ex) {
-            throw new DataNotFoundException(
-                    "There is no such category with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new DataNotFoundException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method getById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        return category;
-    }
-
-    private Category getCategory(long id) {
-        Category category = jdbcTemplate.queryForObject(
-                SQL_SELECT_CATEGORY_BY_ID,
-                categoryRowMapper,
-                id
-        );
-        return category;
     }
 
     @Override
     public List<Category> findAll(Pageable page) {
+        log.debug("Call method findAll()");
 
-        String sqlQuery = getSqlQuery(page);
+        String sqlQuery = buildSqlQuery(page);
 
         List<Category> categories;
         try {
-            categories = getCategories(sqlQuery);
-        } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method findAll()", ex);
+            categories = jdbcTemplate.query(
+                    sqlQuery,
+                    categoryRowMapper
+            );
+        if (log.isDebugEnabled()) {
+            log.debug("Categories are " + categories);
         }
         return categories;
-    }
-
-    private List<Category> getCategories(String query) {
-        List<Category> result = jdbcTemplate.query(
-                query,
-                categoryRowMapper
-        );
-        return result;
-    }
-
-    private String getSqlQuery(Pageable pageable) {
-        String query = SQL_SELECT_ALL_CATEGORIES_ORDER_BY_NAME;
-        if (pageable != null) {
-            query = buildSqlQuery(pageable);
+        } catch (DataAccessException ex) {
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        return query;
     }
 
     private String buildSqlQuery(Pageable pageable) {
-        String query;
-        if (pageable.getSort().isEmpty()) {
-            Sort.Order order = Sort.Order.by(SORT_BY_COLUMN);
+        log.debug("Call method buildSqlQuery()");
 
-            query = collectSqlQuery(pageable, order);
-        } else {
-            Sort.Order order = pageable.getSort().iterator().next();
-
-            query = collectSqlQuery(pageable, order);
+        String query = SQL_SELECT_ALL_CATEGORIES_ORDER_BY_NAME;
+        if (pageable != null) {
+            query = buildSqlQueryWithPageable(pageable);
         }
+        log.debug("SQL query is " + query);
+        return query;
+    }
+
+    private String buildSqlQueryWithPageable(Pageable pageable) {
+        log.debug("Call method buildSqlQueryWithPageable()");
+
+        Sort.Order order;
+        if (pageable.getSort().isEmpty()) {
+            order = Sort.Order.by(DEFAULT_SORT_BY_COLUMN_NAME);
+        } else {
+            order = pageable.getSort().iterator().next();
+        }
+        String query = collectSqlQuery(pageable, order);
+
         return query;
     }
 
     private String collectSqlQuery(Pageable pageable, Sort.Order sort) {
+        log.debug("Call method collectSqlQuery()");
 
         String sortProperty = sort.getProperty();
         String sortDirectionName = sort.getDirection().name();
-        String limit = "LIMIT";
         int pageSize = pageable.getPageSize();
-        String offset = "OFFSET";
         long pageOffset = pageable.getOffset();
 
         String result = String.format(
-                SQL_SELECT_ALL_CATEGORIES_ORDER_BY + " %1$s %2$s %3$s %4$d %5$s %6$d",
-                sortProperty, sortDirectionName, limit, pageSize, offset, pageOffset);
+                SQL_SELECT_ALL_CATEGORIES_ORDER_BY + " %1$s %2$s LIMIT %3$d OFFSET %4$d",
+                sortProperty, sortDirectionName, pageSize, pageOffset);
 
         return result;
     }
 
     @Override
     public void save(Category category) {
+        log.debug("Call method save() for category with id = " + category.getId());
+
+        if (doesExist(category.getId())) {
+            updateCategory(category);
+        } else {
+            saveCategory(category);
+        }
+    }
+
+    public void saveCategory(Category category) {
+        log.debug("Call method saveCategory() for category with id = " + category.getId());
 
         long id = category.getId();
         String title = category.getTitle();
-
         try {
             jdbcTemplate.update(
                     SQL_SAVE_CATEGORY,
                     id, title
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method save()", ex);
+            log.error(ERROR_MESSAGE_FOR_SAVECATEGORY_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_SAVECATEGORY_METHOD, ex);
         }
     }
 
-    @Override
-    public void update(Category category) {
+    public void updateCategory(Category category) {
+        log.debug("Call method updateCategory() for category with id = " + category.getId());
 
         long id = category.getId();
         String title = category.getTitle();
@@ -149,23 +169,24 @@ public class CategoryDAOImpl implements CategoryDAO {
                     title, id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method update()", ex);
+            log.error(ERROR_MESSAGE_FOR_UPDATECATEGORY_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_UPDATECATEGORY_METHOD, ex);
         }
     }
 
     @Override
     public void delete(long id) {
+        log.debug("Call method delete() for category with id = " + id);
+
         try {
             jdbcTemplate.update(
                     SQL_DELETE_CATEGORY,
                     id
             );
         } catch (DataAccessException ex) {
-            throw new DAOException(
-                    "Something went wrong when trying to call the method delete()", ex);
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
     }
 }
-
 

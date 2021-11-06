@@ -7,17 +7,25 @@ import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.exceptions.ServiceException;
 import dev.andrylat.task2.services.UserService;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Log4j
 @Service
 public class UserServiceImpl implements UserService {
-
-    private static final Logger logger = Logger.getLogger(UserServiceImpl.class);
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String ERROR_MESSAGE_FOR_VALIDATE_METHOD = "id can not be less or equals zero";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such event with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVE_METHOD = "Error during call the method save()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
+    private static final String ERROR_MESSAGE_FOR_GETALLEVENTS_METHOD = "Error during call the method getAllEventsByUserId()";
+    private static final String ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD = "Error during call the method addNewEvent()";
+    private static final String ERROR_MESSAGE_FOR_REMOVEEVENT_METHOD = "Error during call the method removeEvent()";
 
     @Autowired
     private UserDAO userDAO;
@@ -26,165 +34,124 @@ public class UserServiceImpl implements UserService {
     private EventDAO eventDAO;
 
     @Override
-    public User getUserById(long id) {
-        logger.debug("Call method getUserById() with id = " + id);
+    public User getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         validateId(id);
 
         User user;
         try {
             user = userDAO.getById(id);
+            if (log.isDebugEnabled()) {
+                log.debug("User is " + user);
+            }
+            return user;
         } catch (DataNotFoundException ex) {
-            logger.error("There is no such event with id = " + id);
-            throw new ServiceException("There is no such event with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new ServiceException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DAOException ex) {
-            logger.error("Something went wrong when trying to call the method getEventById()");
-            throw new ServiceException("Something went wrong when trying to call the method getEventById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("User is " + user);
-        }
-        return user;
     }
 
     private void validateId(long id) {
-        logger.debug("Call method validateId() with id = " + id);
+        log.debug("Call method validateId() with id = " + id);
         if (id <= 0) {
-            logger.error("id can not be less or equals zero");
-            throw new ServiceException("id can not be less or equals zero");
+            log.error(ERROR_MESSAGE_FOR_VALIDATE_METHOD);
+            throw new ServiceException(ERROR_MESSAGE_FOR_VALIDATE_METHOD);
         }
     }
 
     @Override
-    public List<User> findAllUsers(Pageable pageable) {
-        logger.debug("Call method findAll()");
+    public List<User> findAll(Pageable pageable) {
+        log.debug("Call method findAll()");
 
         List<User> users;
         try {
             users = userDAO.findAll(pageable);
+            if (log.isDebugEnabled()) {
+                log.debug("Users are " + users);
+            }
+            return users;
         } catch (DAOException ex) {
-            logger.error("Could not get users", ex);
-            throw new ServiceException("Could not get users", ex);
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Users are " + users);
-        }
-        return users;
     }
 
     @Override
-    public void saveUser(User user) {
-        logger.debug("Call method saveUser() for user with id = " + user.getId());
-
-        validate(user);
-    }
-
-    private void validate(User user) {
-        logger.debug("Call method validate() for user with id = " + user.getId());
+    public void save(User user) {
+        log.debug("Call method save() for user with id = " + user.getId());
 
         validateId(user.getId());
 
         try {
-            userDAO.getById(user.getId());
-
-            updateUser(user);
-        } catch(DataNotFoundException ex) {
-            saveNewUser(user);
-        } catch (DAOException ex) {
-            throw new ServiceException("Something went wrong when trying to call the method saveUser()", ex);
-        }
-    }
-
-    private void saveNewUser(User user) {
-        logger.debug("Call method saveNewUser() for user with id = " + user.getId());
-
-        try {
             userDAO.save(user);
         } catch (DAOException ex) {
-            logger.error("Could not save user with id = " + user.getId(), ex);
-            throw new ServiceException("Could not save user with id = " + user.getId(), ex);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(user + "is added in DB");
-        }
-    }
-
-    private void updateUser(User user) {
-        logger.debug("Call method updateUser() for user with id = " + user.getId());
-
-        try {
-            userDAO.update(user);
-        } catch (DAOException ex) {
-            logger.error("Could not update user with id = " + user.getId(), ex);
-            throw new ServiceException("Could not update user with id = " + user.getId(), ex);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(user + "is updated in DB");
+            log.error(ERROR_MESSAGE_FOR_SAVE_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_SAVE_METHOD, ex);
         }
     }
 
     @Override
-    public void deleteUserById(long id) {
-        logger.debug("Call method deleteUserById() with id = " + id);
+    public void delete(long id) {
+        log.debug("Call method delete() with id = " + id);
 
         validateId(id);
 
         try {
             userDAO.delete(id);
+            log.debug("User with id = " + id + " is deleted in DB");
         } catch (DAOException ex) {
-            logger.error("Could not delete user with id = " + id, ex);
-            throw new ServiceException("Could not delete user with id = " + id, ex);
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
-        logger.debug("User with id = " + id + " is deleted in DB");
     }
 
     @Override
     public List<String> getAllEventsByUserId(long id) {
-        logger.debug("Call method getAllEventsByUserId() with id = " + id);
+        log.debug("Call method getAllEventsByUserId() with id = " + id);
 
         validateId(id);
 
         List<String> events;
         try {
             events = userDAO.getAllEventsByUserId(id);
+            if (log.isDebugEnabled()) {
+                log.debug("Events are " + events);
+            }
+            return events;
         } catch (DAOException ex) {
-            logger.error("Could not get events", ex);
-            throw new ServiceException("Could not get events", ex);
+            log.error(ERROR_MESSAGE_FOR_GETALLEVENTS_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_GETALLEVENTS_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Events are " + events);
-        }
-        return events;
     }
 
     @Override
     public void addNewEvent(long userId, long eventId) {
-        logger.debug("Call method addNewEvent() for " +
+        log.debug("Call method addNewEvent() for " +
                 "user id = " + userId + " and event id = " + eventId);
-
         try {
             userDAO.addNewEvent(userId, eventId);
+            log.debug("Event with id = " + eventId + " is added in DB");
         } catch (DAOException ex) {
-            logger.error("Could not add event with " +
-                    "user id = " + userId + " and event id = " + eventId, ex);
-            throw new ServiceException("Could not add event with " +
-                    "user id = " + userId + " and event id = " + eventId, ex);
+            log.error(ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD, ex);
         }
-        logger.debug("Event with id = " + eventId + " is added in DB");
     }
 
     @Override
     public void removeEvent(long userId, long eventId) {
-        logger.debug("Call method removeEvent() for " +
+        log.debug("Call method removeEvent() for " +
                 "user id = " + userId + " and event id = " + eventId);
-
         try {
             userDAO.removeEvent(userId, eventId);
+            log.debug("Event with id = " + eventId + " is deleted in DB");
         } catch (DAOException ex) {
-            logger.error("Could not delete event with id = " + eventId, ex);
-            throw new ServiceException("Could not delete event with id = " + eventId, ex);
+            log.error(ERROR_MESSAGE_FOR_REMOVEEVENT_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_REMOVEEVENT_METHOD, ex);
         }
-        logger.debug("Event with id = " + eventId + " is deleted in DB");
     }
 }
 

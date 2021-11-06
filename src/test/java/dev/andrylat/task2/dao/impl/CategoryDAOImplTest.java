@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class CategoryDAOImplTest {
+class CategoryDAOImplTest {
     private static final String SQL_SELECT_CATEGORY_ID = "SELECT category_id FROM categories WHERE name = ?";
     private static final String SQL_SELECT_ALL_CATEGORIES_ID = "SELECT category_id FROM categories";
 
@@ -39,7 +39,7 @@ public class CategoryDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldReturnCategoryById_WhenInputIsId() {
+    void getById_ShouldReturnCategory_WhenInputIsExistIdValue() {
 
         Category expectedCategory = getCategory(1, "exhibition");
         Category actualCategory = categoryDAO.getById(1);
@@ -48,19 +48,13 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
+    void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
 
-        Throwable exception = assertThrows(DataNotFoundException.class,
-                () -> categoryDAO.getById(-1));
-
-        String expected = "There is no such category with id = -1";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(DataNotFoundException.class, () -> categoryDAO.getById(-1));
     }
 
     @Test
-    public void findAll_ShouldReturnAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSort() {
+    void findAll_ShouldReturnAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 4);
 
@@ -82,7 +76,7 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldReturnTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSort() {
+    void findAll_ShouldReturnTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSort() {
 
         Pageable sortedByName = PageRequest.of(0, 2);
 
@@ -102,7 +96,7 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldReturnAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
+    void findAll_ShouldReturnAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
 
         Pageable sortedById = PageRequest.of(0, 1, Sort.by("category_id"));
 
@@ -123,7 +117,7 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void findAll_ShouldReturnAllCategoriesSortedByName_WhenPageIsNull() {
+    void findAll_ShouldReturnAllCategoriesSortedByName_WhenPageIsNull() {
 
         Pageable page = null;
 
@@ -145,7 +139,7 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void save_ShouldSaveCategory_WhenInputIsCategoryObjectWithIdAndName() {
+    void save_ShouldSaveCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
         Category newCategory = getCategory(5, "opera");
 
@@ -163,11 +157,11 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void update_ShouldUpdateExistedCategory_WhenInputIsCategoryObjectWithIdAndName() {
+    void save_ShouldUpdateExistedCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
         Category updatedCategory = getCategory(1, "opera");
 
-        categoryDAO.update(updatedCategory);
+        categoryDAO.save(updatedCategory);
 
         String checkName = "opera";
 
@@ -181,7 +175,7 @@ public class CategoryDAOImplTest {
     }
 
     @Test
-    public void delete_ShouldDeleteCategoryById_WhenInputIsId() {
+    void delete_ShouldDeleteCategoryById_WhenInputIsId() {
 
         long categoryId = 1;
 

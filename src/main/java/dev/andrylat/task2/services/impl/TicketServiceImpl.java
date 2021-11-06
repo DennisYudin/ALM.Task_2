@@ -22,7 +22,7 @@ public class TicketServiceImpl implements TicketService {
     private TicketDAO ticketDAO;
 
     @Override
-    public Ticket getTicketById(long id) {
+    public Ticket getById(long id) {
         logger.debug("Call method getById() with id = " + id);
 
         validateId(id);
@@ -52,7 +52,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public List<Ticket> findAllTickets(Pageable pageable) {
+    public List<Ticket> findAll(Pageable pageable) {
         logger.debug("Call method findAll()");
 
         List<Ticket> tickets;
@@ -69,7 +69,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public void saveTicket(Ticket ticket) {
+    public void save(Ticket ticket) {
         logger.debug("Call method saveTicket() for ticket with id = " + ticket.getId());
 
         validate(ticket);
@@ -109,7 +109,7 @@ public class TicketServiceImpl implements TicketService {
         logger.debug("Call method update() for ticket with id = " + ticket.getId());
 
         try {
-            ticketDAO.update(ticket);
+            ticketDAO.save(ticket);
         } catch (DAOException ex) {
             logger.error("Could not update ticket with id = " + ticket.getId(), ex);
             throw new ServiceException("Could not update ticket with id = " + +ticket.getId(), ex);
@@ -120,7 +120,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public void deleteTicketById(long id) {
+    public void delete(long id) {
         logger.debug("Call method deleteTicketById() with id = " + id);
 
         validateId(id);

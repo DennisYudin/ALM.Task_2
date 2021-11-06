@@ -6,131 +6,100 @@ import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.exceptions.ServiceException;
 import dev.andrylat.task2.services.LocationService;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Log4j
 @Service
 public class LocationServiceImpl implements LocationService {
-
-    private static final Logger logger = Logger.getLogger(LocationServiceImpl.class);
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String ERROR_MESSAGE_FOR_VALIDATE_METHOD = "id can not be less or equals zero";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such location with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVE_METHOD = "Error during call the method save()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
 
     @Autowired
     private LocationDAO locationDAO;
 
     @Override
-    public Location getLocationById(long id) {
-        logger.debug("Call method getLocationById() with id = " + id);
+    public Location getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         validateId(id);
 
         Location location;
         try {
             location = locationDAO.getById(id);
+            if (log.isDebugEnabled()) {
+                log.debug("Location is " + location);
+            }
+            return location;
         } catch (DataNotFoundException ex) {
-            logger.error("There is no such location with id = " + id);
-            throw new ServiceException("There is no such location with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new ServiceException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DAOException ex) {
-            logger.error("Something went wrong when trying to call the method getLocationById()");
-            throw new ServiceException("Something went wrong when trying to call the method getLocationById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Location is " + location);
-        }
-        return location;
     }
 
     private void validateId(long id) {
-        logger.debug("Call method validateId() with id = " + id);
+        log.debug("Call method validateId() with id = " + id);
         if (id <= 0) {
-            logger.error("id can not be less or equals zero");
-            throw new ServiceException("id can not be less or equals zero");
+            log.error(ERROR_MESSAGE_FOR_VALIDATE_METHOD);
+            throw new ServiceException(ERROR_MESSAGE_FOR_VALIDATE_METHOD);
         }
     }
 
     @Override
-    public List<Location> findAllLocations(Pageable pageable) {
-        logger.debug("Call method findAllLocations()");
+    public List<Location> findAll(Pageable pageable) {
+        log.debug("Call method findAll()");
 
         List<Location> locations;
         try {
             locations = locationDAO.findAll(pageable);
+            if (log.isDebugEnabled()) {
+                log.debug("Locations are " + locations);
+            }
+            return locations;
         } catch (DAOException ex) {
-            logger.error("Could not get locations", ex);
-            throw new ServiceException("Could not get locations", ex);
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Locations are " + locations);
-        }
-        return locations;
     }
 
     @Override
-    public void saveLocation(Location location) {
-        logger.debug("Call method saveLocation() for location with id = " + location.getId());
-
-        validate(location);
-    }
-
-    private void validate(Location location) {
-        logger.debug("Call method validate() for location with id = " + location.getId());
+    public void save(Location location) {
+        log.debug("Call method save() for location with id = " + location.getId());
 
         validateId(location.getId());
 
         try {
-            locationDAO.getById(location.getId());
-
-            updateLocation(location);
-        } catch(DataNotFoundException ex) {
-            saveNewLocation(location);
-        } catch (DAOException ex) {
-            throw new ServiceException("Something went wrong when trying to call the method saveLocation()", ex);
-        }
-    }
-
-    private void saveNewLocation(Location location) {
-        logger.debug("Call method saveNewLocation() for location with id = " + location.getId());
-
-        try {
             locationDAO.save(location);
         } catch (DAOException ex) {
-            logger.error("Could not save location with id = " + location.getId(), ex);
-            throw new ServiceException("Could not save location with id = " + location.getId(), ex);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(location + "is added in DB");
-        }
-    }
-
-    private void updateLocation(Location location) {
-        logger.debug("Call method updateLocation() for location with id = " + location.getId());
-
-        try {
-            locationDAO.update(location);
-        } catch (DAOException ex) {
-            logger.error("Could not update location with id = " + location.getId(), ex);
-            throw new ServiceException("Could not update location with id = " + location.getId(), ex);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(location + "is updated in DB");
+            log.error(ERROR_MESSAGE_FOR_SAVE_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_SAVE_METHOD, ex);
         }
     }
 
     @Override
-    public void deleteLocationById(long id) {
-        logger.debug("Call method deleteLocationById() with id = " + id);
+    public void delete(long id) {
+        log.debug("Call method delete() with id = " + id);
 
         validateId(id);
 
         try {
             locationDAO.delete(id);
-        } catch (Exception ex) {
-            logger.error("Could not delete location with id = " + id, ex);
-            throw new ServiceException("Could not delete location with id = " + id, ex);
+            log.debug("Location with id = " + id + " is deleted in DB");
+        } catch (DAOException ex) {
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
-        logger.debug("Location with id = " + id + " is deleted in DB");
     }
 }
+

@@ -6,131 +6,95 @@ import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.exceptions.ServiceException;
 import dev.andrylat.task2.services.CategoryService;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Log4j
 @Service
 public class CategoryServiceImpl implements CategoryService {
-
-    private static final Logger logger = Logger.getLogger(CategoryServiceImpl.class);
+    private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String ERROR_MESSAGE_FOR_VALIDATE_METHOD = "id can not be less or equals zero";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such category with id = ";
+    private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
+    private static final String ERROR_MESSAGE_FOR_SAVE_METHOD = "Error during call the method save()";
+    private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
 
     @Autowired
     private CategoryDAO categoryDAO;
 
-    @Override
-    public Category getCategoryById(long id) {
-        logger.debug("Call method getCategoryById() with id = " + id);
+    public Category getById(long id) {
+        log.debug("Call method getById() with id = " + id);
 
         validateId(id);
 
         Category category;
         try {
             category = categoryDAO.getById(id);
+            if (log.isDebugEnabled()) {
+                log.debug("Category is " + category);
+            }
+            return category;
         } catch (DataNotFoundException ex) {
-            logger.error("There is no such category with id = " + id);
-            throw new ServiceException("There is no such category with id = " + id, ex);
+            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            throw new ServiceException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DAOException ex) {
-            logger.error("Something went wrong when trying to call the method getCategoryById()");
-            throw new ServiceException("Something went wrong when trying to call the method getCategoryById()", ex);
+            log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Category is " + category);
-        }
-        return category;
     }
 
     private void validateId(long id) {
-        logger.debug("Call method validateId() with id = " + id);
+        log.debug("Call method validateId() with id = " + id);
         if (id <= 0) {
-            logger.error("id can not be less or equals zero");
-            throw new ServiceException("id can not be less or equals zero");
+            log.error(ERROR_MESSAGE_FOR_VALIDATE_METHOD);
+            throw new ServiceException(ERROR_MESSAGE_FOR_VALIDATE_METHOD);
         }
     }
 
-    @Override
-    public List<Category> findAllCategories(Pageable pageable) {
-        logger.debug("Call method findAllCategories()");
+    public List<Category> findAll(Pageable pageable) {
+        log.debug("Call method findAll()");
 
         List<Category> categories;
         try {
             categories = categoryDAO.findAll(pageable);
+            if (log.isDebugEnabled()) {
+                log.debug("Categories are " + categories);
+            }
+            return categories;
         } catch (DAOException ex) {
-            logger.error("Could not get categories", ex);
-            throw new ServiceException("Could not get categories", ex);
+            log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Categories are " + categories);
-        }
-        return categories;
     }
 
-    @Override
-    public void saveCategory(Category category) {
-        logger.debug("Call method saveCategory() for category with id = " + category.getId());
-
-        validate(category);
-    }
-
-    private void validate(Category category) {
-        logger.debug("Call method validate() for category with id = " + category.getId());
+    public void save(Category category) {
+        log.debug("Call method save() for category with id = " + category.getId());
 
         validateId(category.getId());
 
         try {
-            categoryDAO.getById(category.getId());
-
-            updateCategory(category);
-        } catch (DataNotFoundException ex) {
-            saveNewCategory(category);
-        } catch (DAOException ex) {
-            throw new ServiceException("Something went wrong when trying to call the method saveCategory()", ex);
-        }
-    }
-
-    private void saveNewCategory(Category category) {
-        logger.debug("Call method saveNewCategory() for category with id = " + category.getId());
-
-        try {
             categoryDAO.save(category);
         } catch (DAOException ex) {
-            logger.error("Could not save category with id = " + category.getId(), ex);
-            throw new ServiceException("Could not save category with id = " + category.getId(), ex);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(category + " is added in DB");
+            log.error(ERROR_MESSAGE_FOR_SAVE_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_SAVE_METHOD, ex);
         }
     }
 
-    private void updateCategory(Category category) {
-        logger.debug("Call method updateCategory() for category with id = " + category.getId());
-
-        try {
-            categoryDAO.update(category);
-        } catch (DAOException ex) {
-            logger.error("Could not update category with id = " + category.getId(), ex);
-            throw new ServiceException("Could not update category with id = " + category.getId(), ex);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(category + " is updated in DB");
-        }
-    }
-
-    @Override
-    public void deleteCategoryById(long id) {
-        logger.debug("Call method deleteCategoryById() with id = " + id);
+    public void delete(long id) {
+        log.debug("Call method delete() with id = " + id);
 
         validateId(id);
 
         try {
             categoryDAO.delete(id);
+            log.debug("Category with id = " + id + " is deleted in DB");
         } catch (DAOException ex) {
-            logger.error("Could not delete category", ex);
-            throw new ServiceException("Could not delete category", ex);
+            log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
-        logger.debug("Category with id = " + id + " is deleted in DB");
     }
 }

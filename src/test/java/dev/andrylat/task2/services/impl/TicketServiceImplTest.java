@@ -36,7 +36,7 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void getTicketById_ShouldReturnTicketById_WhenInputIsId() throws ParseException {
+    void getById_ShouldReturnTicket_WhenInputIsExistId() throws ParseException {
 
         Date date = getDate("17-02-1992 20:45:00");
         Ticket expectedTicket = getTicket(
@@ -52,21 +52,15 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void getTicketById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
+    void getById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
 
         Mockito.when(ticketDAO.getById(-1)).thenThrow(ServiceException.class);
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> ticketService.getById(-1));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> ticketService.getById(-1));
     }
 
     @Test
-    void findAllTickets_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageRequestWithoutSortValue()
+    void findAll_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageRequestWithoutSortValue()
             throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 2);
@@ -96,8 +90,7 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void findAllTickets_ShouldReturnAllTicketsSortedByEventName_WhenPageIsNull()
-            throws ParseException {
+    void findAll_ShouldReturnAllTicketsSortedByEventName_WhenPageIsNull() throws ParseException {
 
         Pageable page = null;
 
@@ -126,7 +119,7 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void findAllTickets_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageRequestWithSortValue()
+    void findAll_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageRequestWithSortValue()
             throws ParseException {
 
         Pageable sortedByID = PageRequest.of(0, 2, Sort.by("ticket_id"));
@@ -156,8 +149,7 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void findAllTickets_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageWithSizeOne()
-            throws ParseException {
+    void findAll_ShouldReturnAllTicketsSortedByEventName_WhenInputIsPageWithSizeOne() throws ParseException {
 
         Pageable sortedByName = PageRequest.of(0, 1);
 
@@ -179,8 +171,7 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void saveTicket_ShouldSaveNewTicket_WhenInputIsNewTicketObjectWithDetails()
-            throws ParseException {
+    void save_ShouldSaveNewTicket_WhenInputIsNewTicketObjectWithDetails() throws ParseException {
 
         Date concertDate = getDate("17-02-1992 16:30:00");
         Ticket newTicket = getTicket(
@@ -196,8 +187,7 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void saveTicket_ShouldThrowServiceException_WhenInputIsHasNegativeId()
-            throws ParseException {
+    void save_ShouldThrowServiceException_WhenInputIsHasNegativeId() throws ParseException {
 
         Date concertDate = getDate("17-02-1992 16:30:00");
         Ticket newTicket = getTicket(
@@ -215,8 +205,7 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void saveTicket_ShouldUpdateExistedTicket_WhenInputIsTicketObjectWithDetails()
-            throws ParseException {
+    void save_ShouldUpdateExistedTicket_WhenInputIsTicketObjectWithDetails() throws ParseException {
 
         Date firstCreationDate = getDate("17-02-1992 20:45:00");
         Ticket oldTicket = getTicket(
@@ -238,7 +227,7 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void deleteCategoryById_ShouldDeleteCategoryById_WhenInputIsId() {
+    void delete_ShouldDeleteCategoryById_WhenInputIsId() {
 
         ticketService.delete(3000);
 
@@ -246,15 +235,9 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void deleteCategoryById_ShouldThrowServiceException_WhenInputHasNegativeId() {
+    void delete_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
-        Throwable exception = assertThrows(ServiceException.class,
-                () -> ticketService.delete(-3000));
-
-        String expected = "id can not be less or equals zero";
-        String actual = exception.getMessage();
-
-        assertEquals(expected, actual);
+        assertThrows(ServiceException.class, () -> ticketService.delete(-3000));
     }
 
     private Ticket getTicket(long id, String name,

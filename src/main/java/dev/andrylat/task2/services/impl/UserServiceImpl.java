@@ -19,7 +19,7 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
     private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
     private static final String ERROR_MESSAGE_FOR_VALIDATE_METHOD = "id can not be less or equals zero";
-    private static final String EMPTY_RESULT_MESSAGE = "There is no such event with id = ";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such user with id = ";
     private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
     private static final String ERROR_MESSAGE_FOR_SAVE_METHOD = "Error during call the method save()";
     private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";

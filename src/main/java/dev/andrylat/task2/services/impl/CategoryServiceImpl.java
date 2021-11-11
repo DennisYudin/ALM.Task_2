@@ -31,9 +31,8 @@ public class CategoryServiceImpl implements CategoryService {
 
         validateId(id);
 
-        Category category;
         try {
-            category = categoryDAO.getById(id);
+            Category category = categoryDAO.getById(id);
             if (log.isDebugEnabled()) {
                 log.debug("Category is " + category);
             }
@@ -58,9 +57,8 @@ public class CategoryServiceImpl implements CategoryService {
     public List<Category> findAll(Pageable pageable) {
         log.debug("Call method findAll()");
 
-        List<Category> categories;
         try {
-            categories = categoryDAO.findAll(pageable);
+            List<Category> categories = categoryDAO.findAll(pageable);
             if (log.isDebugEnabled()) {
                 log.debug("Categories are " + categories);
             }

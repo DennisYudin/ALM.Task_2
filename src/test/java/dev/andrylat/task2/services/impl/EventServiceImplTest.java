@@ -278,7 +278,7 @@ class EventServiceImplTest {
 
         eventService.addNewCategory(eventId, categoryId);
 
-        Mockito.verify(eventDAO, Mockito.times(1)).addNewCategory(eventId, categoryId);
+        Mockito.verify(eventDAO, Mockito.times(1)).assignCategory(eventId, categoryId);
     }
 
     @Test
@@ -373,7 +373,7 @@ class EventServiceImplTest {
     }
 
     private Date getDate(String date) throws ParseException {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
 
         Date convertedDate = simpleDateFormat.parse(date);
 

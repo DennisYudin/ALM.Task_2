@@ -49,9 +49,8 @@ public class CategoryDAOImpl implements CategoryDAO {
     public Category getById(long id) {
         log.debug("Call method getById() with id = " + id);
 
-        Category category;
         try {
-            category = jdbcTemplate.queryForObject(
+            Category category = jdbcTemplate.queryForObject(
                     SQL_SELECT_CATEGORY_BY_ID,
                     categoryRowMapper,
                     id
@@ -75,16 +74,15 @@ public class CategoryDAOImpl implements CategoryDAO {
 
         String sqlQuery = buildSqlQuery(page);
 
-        List<Category> categories;
         try {
-            categories = jdbcTemplate.query(
+            List<Category> categories = jdbcTemplate.query(
                     sqlQuery,
                     categoryRowMapper
             );
-        if (log.isDebugEnabled()) {
-            log.debug("Categories are " + categories);
-        }
-        return categories;
+            if (log.isDebugEnabled()) {
+                log.debug("Categories are " + categories);
+            }
+            return categories;
         } catch (DataAccessException ex) {
             log.error(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);
             throw new DAOException(ERROR_MESSAGE_FOR_FINDALL_METHOD, ex);

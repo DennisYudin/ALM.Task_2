@@ -1,64 +1,34 @@
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:30 - Call method getById() with id = 1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:51 - Call method validateId() with id = 1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:38 - Category is Category(id=1, title=exhibition)
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:75 - Call method save() for category with id = -1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:51 - Call method validateId() with id = -1
-2021-11-06 11:08:35 ERROR CategoryServiceImpl:53 - id can not be less or equals zero
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:59 - Call method findAll()
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:65 - Categories are [Category(id=4, title=Art concert), Category(id=1, title=exhibition), Category(id=2, title=movie), Category(id=3, title=theatre)]
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:59 - Call method findAll()
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:65 - Categories are [Category(id=1, title=exhibition), Category(id=2, title=movie), Category(id=3, title=theatre), Category(id=4, title=Art concert)]
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:59 - Call method findAll()
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:65 - Categories are [Category(id=4, title=Art concert), Category(id=1, title=exhibition)]
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:88 - Call method delete() with id = -1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:51 - Call method validateId() with id = -1
-2021-11-06 11:08:35 ERROR CategoryServiceImpl:53 - id can not be less or equals zero
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:88 - Call method delete() with id = 1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:51 - Call method validateId() with id = 1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:94 - Category with id = 1 is deleted in DB
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:75 - Call method save() for category with id = 5
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:51 - Call method validateId() with id = 5
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:75 - Call method save() for category with id = 1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:51 - Call method validateId() with id = 1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:59 - Call method findAll()
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:65 - Categories are [Category(id=1, title=exhibition), Category(id=2, title=movie), Category(id=3, title=theatre), Category(id=4, title=Art concert)]
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:30 - Call method getById() with id = -1
-2021-11-06 11:08:35 DEBUG CategoryServiceImpl:51 - Call method validateId() with id = -1
-2021-11-06 11:08:35 ERROR CategoryServiceImpl:53 - id can not be less or equals zero
-2021-11-06 11:41:12 DEBUG UserServiceImpl:68 - Call method findAll()
-2021-11-06 11:41:12 DEBUG UserServiceImpl:74 - Users are [User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer), User(id=2001, name=Mark, surname=Batmanov, email=redDragon@mail.ru, login=HelloWorld, password=1234, type=customer)]
-2021-11-06 11:41:12 DEBUG UserServiceImpl:114 - Call method getAllEventsByUserId() with id = -1
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = -1
-2021-11-06 11:41:12 ERROR UserServiceImpl:61 - id can not be less or equals zero
-2021-11-06 11:41:12 DEBUG UserServiceImpl:146 - Call method removeEvent() for user id = 2000 and event id = 1000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:150 - Event with id = 1000 is deleted in DB
-2021-11-06 11:41:12 DEBUG UserServiceImpl:85 - Call method save() for user with id = 2000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:68 - Call method findAll()
-2021-11-06 11:41:12 DEBUG UserServiceImpl:74 - Users are [User(id=2001, name=Mark, surname=Batmanov, email=redDragon@mail.ru, login=HelloWorld, password=1234, type=customer), User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer)]
-2021-11-06 11:41:12 DEBUG UserServiceImpl:85 - Call method save() for user with id = 2002
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2002
-2021-11-06 11:41:12 DEBUG UserServiceImpl:68 - Call method findAll()
-2021-11-06 11:41:12 DEBUG UserServiceImpl:74 - Users are [User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer)]
-2021-11-06 11:41:12 DEBUG UserServiceImpl:114 - Call method getAllEventsByUserId() with id = 165
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = 165
-2021-11-06 11:41:12 DEBUG UserServiceImpl:122 - Events are []
-2021-11-06 11:41:12 DEBUG UserServiceImpl:133 - Call method addNewEvent() for user id = 2001 and event id = 1001
-2021-11-06 11:41:12 DEBUG UserServiceImpl:137 - Event with id = 1001 is added in DB
-2021-11-06 11:41:12 DEBUG UserServiceImpl:114 - Call method getAllEventsByUserId() with id = 2000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:122 - Events are [Oxxxymiron concert]
-2021-11-06 11:41:12 DEBUG UserServiceImpl:38 - Call method getById() with id = 2000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:46 - User is User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer)
-2021-11-06 11:41:12 DEBUG UserServiceImpl:99 - Call method delete() with id = -1
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = -1
-2021-11-06 11:41:12 ERROR UserServiceImpl:61 - id can not be less or equals zero
-2021-11-06 11:41:12 DEBUG UserServiceImpl:68 - Call method findAll()
-2021-11-06 11:41:12 DEBUG UserServiceImpl:74 - Users are [User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer), User(id=2001, name=Mark, surname=Batmanov, email=redDragon@mail.ru, login=HelloWorld, password=1234, type=customer)]
-2021-11-06 11:41:12 DEBUG UserServiceImpl:38 - Call method getById() with id = -1
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = -1
-2021-11-06 11:41:12 ERROR UserServiceImpl:61 - id can not be less or equals zero
-2021-11-06 11:41:12 DEBUG UserServiceImpl:99 - Call method delete() with id = 2000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2000
-2021-11-06 11:41:12 DEBUG UserServiceImpl:105 - User with id = 2000 is deleted in DB
+2021-11-11 13:47:11 DEBUG UserServiceImpl:68 - Call method findAll()
+2021-11-11 13:47:11 DEBUG UserServiceImpl:73 - Users are [User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer), User(id=2001, name=Mark, surname=Batmanov, email=redDragon@mail.ru, login=HelloWorld, password=1234, type=customer)]
+2021-11-11 13:47:11 DEBUG UserServiceImpl:131 - Call method assignEvent() for user id = 2001 and event id = 1001
+2021-11-11 13:47:11 DEBUG UserServiceImpl:135 - Event with id = 1001 is added in DB
+2021-11-11 13:47:11 DEBUG UserServiceImpl:113 - Call method getAllEventsByUserId() with id = -1
+2021-11-11 13:47:11 DEBUG UserServiceImpl:59 - Call method validateId() with id = -1
+2021-11-11 13:47:11 ERROR UserServiceImpl:61 - id can not be less or equals zero
+2021-11-11 13:47:11 DEBUG UserServiceImpl:144 - Call method removeEvent() for user id = 2000 and event id = 1000
+2021-11-11 13:47:11 DEBUG UserServiceImpl:148 - Event with id = 1000 is deleted in DB
+2021-11-11 13:47:11 DEBUG UserServiceImpl:84 - Call method save() for user with id = 2000
+2021-11-11 13:47:11 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2000
+2021-11-11 13:47:11 DEBUG UserServiceImpl:68 - Call method findAll()
+2021-11-11 13:47:11 DEBUG UserServiceImpl:73 - Users are [User(id=2001, name=Mark, surname=Batmanov, email=redDragon@mail.ru, login=HelloWorld, password=1234, type=customer), User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer)]
+2021-11-11 13:47:11 DEBUG UserServiceImpl:84 - Call method save() for user with id = 2002
+2021-11-11 13:47:11 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2002
+2021-11-11 13:47:11 DEBUG UserServiceImpl:68 - Call method findAll()
+2021-11-11 13:47:11 DEBUG UserServiceImpl:73 - Users are [User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer)]
+2021-11-11 13:47:11 DEBUG UserServiceImpl:113 - Call method getAllEventsByUserId() with id = 165
+2021-11-11 13:47:11 DEBUG UserServiceImpl:59 - Call method validateId() with id = 165
+2021-11-11 13:47:11 DEBUG UserServiceImpl:120 - Events are []
+2021-11-11 13:47:11 DEBUG UserServiceImpl:39 - Call method getById() with id = 2000
+2021-11-11 13:47:11 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2000
+2021-11-11 13:47:11 DEBUG UserServiceImpl:46 - User is User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer)
+2021-11-11 13:47:11 DEBUG UserServiceImpl:98 - Call method delete() with id = -1
+2021-11-11 13:47:11 DEBUG UserServiceImpl:59 - Call method validateId() with id = -1
+2021-11-11 13:47:11 ERROR UserServiceImpl:61 - id can not be less or equals zero
+2021-11-11 13:47:11 DEBUG UserServiceImpl:68 - Call method findAll()
+2021-11-11 13:47:11 DEBUG UserServiceImpl:73 - Users are [User(id=2000, name=Dennis, surname=Yudin, email=dennisYudin@mail.ru, login=Big boss, password=0000, type=customer), User(id=2001, name=Mark, surname=Batmanov, email=redDragon@mail.ru, login=HelloWorld, password=1234, type=customer)]
+2021-11-11 13:47:11 DEBUG UserServiceImpl:39 - Call method getById() with id = -1
+2021-11-11 13:47:11 DEBUG UserServiceImpl:59 - Call method validateId() with id = -1
+2021-11-11 13:47:11 ERROR UserServiceImpl:61 - id can not be less or equals zero
+2021-11-11 13:47:11 DEBUG UserServiceImpl:98 - Call method delete() with id = 2000
+2021-11-11 13:47:11 DEBUG UserServiceImpl:59 - Call method validateId() with id = 2000
+2021-11-11 13:47:11 DEBUG UserServiceImpl:104 - User with id = 2000 is deleted in DB

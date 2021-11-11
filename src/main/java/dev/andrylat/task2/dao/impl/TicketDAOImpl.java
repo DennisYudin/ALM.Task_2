@@ -58,9 +58,8 @@ public class TicketDAOImpl implements TicketDAO {
     public Ticket getById(long id) {
         log.debug("Call method getById() with id = " + id);
 
-        Ticket ticket;
         try {
-            ticket = jdbcTemplate.queryForObject(
+            Ticket ticket = jdbcTemplate.queryForObject(
                     SQL_SELECT_TICKET_BY_ID,
                     ticketRowMapper,
                     id
@@ -84,9 +83,8 @@ public class TicketDAOImpl implements TicketDAO {
 
         String sqlQuery = buildSqlQuery(page);
 
-        List<Ticket> tickets;
         try {
-            tickets = jdbcTemplate.query(
+            List<Ticket> tickets = jdbcTemplate.query(
                     sqlQuery,
                     ticketRowMapper
             );

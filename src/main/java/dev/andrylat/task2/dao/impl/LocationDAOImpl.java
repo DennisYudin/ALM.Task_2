@@ -57,9 +57,8 @@ public class LocationDAOImpl implements LocationDAO {
     public Location getById(long id) {
         log.debug("Call method getById() with id = " + id);
 
-        Location location;
         try {
-            location = jdbcTemplate.queryForObject(
+            Location location = jdbcTemplate.queryForObject(
                     SQL_SELECT_LOCATION_BY_ID,
                     locationRowMapper,
                     id
@@ -83,9 +82,8 @@ public class LocationDAOImpl implements LocationDAO {
 
         String sqlQuery = buildSqlQuery(page);
 
-        List<Location> locations;
         try {
-            locations = jdbcTemplate.query(
+            List<Location> locations = jdbcTemplate.query(
                     sqlQuery,
                     locationRowMapper
             );

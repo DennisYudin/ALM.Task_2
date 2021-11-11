@@ -2,6 +2,7 @@ package dev.andrylat.task2.dao.impl;
 
 import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.UserDAO;
+import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.entities.User;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -262,27 +265,106 @@ class UserDAOImplTest {
     }
 
     @Test
-    void getAllEventsByUserId_ShouldReturnAllEvents_WhenInputIsUserId() {
+    void getAllEventsByUserId_ShouldReturnTwoEvents_WhenInputIsUserIdAndPageable() throws ParseException {
 
-        long id = 2001;
+        Pageable pageable = PageRequest.of(0, 2);
 
-        List<String> actualEvents = userDAO.getAllEventsByUserId(id);
-        List<String> expectedEvents = new ArrayList<>(Arrays.asList("Oxxxymiron concert"));
+        long userId = 2000;
+
+        Date firstConcertDate = getDate("13-08-2021 18:23:00");
+        Event firstEvent = getEvent(
+                1000, "Oxxxymiron concert",
+                firstConcertDate, 5000,
+                "actual", "Oxxxymiron is",
+                101
+        );
+        Date secondConcertDate = getDate("14-09-2019 15:30:00");
+        Event secondEvent = getEvent(
+                1001, "Basta",
+                secondConcertDate, 1000,
+                "actual", "Bla bla bla",
+                100
+        );
+        List<Event> actualEvents = userDAO.getAllEventsByUserId(userId, pageable);
+        List<Event> expectedEvents = new ArrayList<>();
+
+        expectedEvents.add(firstEvent);
+        expectedEvents.add(secondEvent);
 
         int expectedSize = expectedEvents.size();
         int actualSize = actualEvents.size();
 
         assertEquals(expectedSize, actualSize);
-        assertTrue(expectedEvents.containsAll(actualEvents));
+        assertTrue(actualEvents.containsAll(expectedEvents));
     }
 
     @Test
-    void addNewEvent_ShouldAddNewEvent_WhenInputIsUserIdAndEventId() {
+    void getAllEventsByUserId_ShouldReturnTwoEvents_WhenInputIsUserIdAndPageableIsNull() throws ParseException {
+
+        Pageable pageable = null;
+
+        long userId = 2000;
+
+        Date firstConcertDate = getDate("13-08-2021 18:23:00");
+        Event firstEvent = getEvent(
+                1000, "Oxxxymiron concert",
+                firstConcertDate, 5000,
+                "actual", "Oxxxymiron is",
+                101
+        );
+        Date secondConcertDate = getDate("14-09-2019 15:30:00");
+        Event secondEvent = getEvent(
+                1001, "Basta",
+                secondConcertDate, 1000,
+                "actual", "Bla bla bla",
+                100
+        );
+        List<Event> actualEvents = userDAO.getAllEventsByUserId(userId, pageable);
+        List<Event> expectedEvents = new ArrayList<>();
+
+        expectedEvents.add(firstEvent);
+        expectedEvents.add(secondEvent);
+
+        int expectedSize = expectedEvents.size();
+        int actualSize = actualEvents.size();
+
+        assertEquals(expectedSize, actualSize);
+        assertTrue(actualEvents.containsAll(expectedEvents));
+    }
+
+    @Test
+    void getAllEventsByUserId_ShouldReturnOneEvent_WhenInputIsUserIdAndPageableWithSizeOne() throws ParseException {
+
+        Pageable pageable = PageRequest.of(0, 1);
+
+        long userId = 2000;
+
+        Date firstConcertDate = getDate("13-08-2021 18:23:00");
+        Event firstEvent = getEvent(
+                1000, "Oxxxymiron concert",
+                firstConcertDate, 5000,
+                "actual", "Oxxxymiron is",
+                101
+        );
+        List<Event> actualEvents = userDAO.getAllEventsByUserId(userId, pageable);
+        List<Event> expectedEvents = new ArrayList<>();
+
+        expectedEvents.add(firstEvent);
+
+        int expectedSize = expectedEvents.size();
+        int actualSize = actualEvents.size();
+
+        assertEquals(expectedSize, actualSize);
+        assertTrue(actualEvents.containsAll(expectedEvents));
+    }
+
+    @Test
+    void assignEvent_ShouldAddNewEvent_WhenInputIsUserIdAndEventId() {
 
         long userId = 2001;
         long eventId = 1001;
 
-        userDAO.addNewEvent(userId, eventId);
+        userDAO.assignEvent(userId, eventId);
 
         long checkUserId = 2001;
         long checkEventId = 1001;
@@ -329,6 +411,29 @@ class UserDAOImplTest {
         user.setPassword(password);
         user.setType(type);
         return user;
+    }
+
+    private Event getEvent(long id, String name,
+                           Date date, int price,
+                           String status, String desc,
+                           long foreignKey) {
+        Event event = new Event();
+        event.setId(id);
+        event.setTitle(name);
+        event.setDate(date);
+        event.setPrice(price);
+        event.setStatus(status);
+        event.setDescription(desc);
+        event.setLocationId(foreignKey);
+        return event;
+    }
+
+    private Date getDate(String date) throws ParseException {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+
+        Date convertedDate = simpleDateFormat.parse(date);
+
+        return convertedDate;
     }
 }
 

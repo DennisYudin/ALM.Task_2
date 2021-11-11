@@ -32,9 +32,8 @@ public class TicketServiceImpl implements TicketService {
 
         validateId(id);
 
-        Ticket ticket;
         try {
-            ticket = ticketDAO.getById(id);
+            Ticket ticket = ticketDAO.getById(id);
             if (log.isDebugEnabled()) {
                 log.debug("Ticket is" + ticket);
             }
@@ -60,9 +59,8 @@ public class TicketServiceImpl implements TicketService {
     public List<Ticket> findAll(Pageable pageable) {
         log.debug("Call method findAll()");
 
-        List<Ticket> tickets;
         try {
-            tickets = ticketDAO.findAll(pageable);
+            List<Ticket> tickets = ticketDAO.findAll(pageable);
             if (log.isDebugEnabled()) {
                 log.debug("Tickets are " + tickets);
             }

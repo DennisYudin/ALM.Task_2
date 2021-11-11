@@ -2,6 +2,7 @@ package dev.andrylat.task2.services.impl;
 
 import dev.andrylat.task2.dao.EventDAO;
 import dev.andrylat.task2.dao.UserDAO;
+import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.entities.User;
 import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
@@ -24,7 +25,7 @@ public class UserServiceImpl implements UserService {
     private static final String ERROR_MESSAGE_FOR_SAVE_METHOD = "Error during call the method save()";
     private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
     private static final String ERROR_MESSAGE_FOR_GETALLEVENTS_METHOD = "Error during call the method getAllEventsByUserId()";
-    private static final String ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD = "Error during call the method addNewEvent()";
+    private static final String ERROR_MESSAGE_FOR_ASSIGNEVENT_METHOD = "Error during call the method assignEvent()";
     private static final String ERROR_MESSAGE_FOR_REMOVEEVENT_METHOD = "Error during call the method removeEvent()";
 
     @Autowired
@@ -39,9 +40,8 @@ public class UserServiceImpl implements UserService {
 
         validateId(id);
 
-        User user;
         try {
-            user = userDAO.getById(id);
+            User user = userDAO.getById(id);
             if (log.isDebugEnabled()) {
                 log.debug("User is " + user);
             }
@@ -67,9 +67,8 @@ public class UserServiceImpl implements UserService {
     public List<User> findAll(Pageable pageable) {
         log.debug("Call method findAll()");
 
-        List<User> users;
         try {
-            users = userDAO.findAll(pageable);
+            List<User> users = userDAO.findAll(pageable);
             if (log.isDebugEnabled()) {
                 log.debug("Users are " + users);
             }
@@ -110,14 +109,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<String> getAllEventsByUserId(long id) {
+    public List<Event> getAllEventsByUserId(long id, Pageable pageable) {
         log.debug("Call method getAllEventsByUserId() with id = " + id);
 
         validateId(id);
 
-        List<String> events;
         try {
-            events = userDAO.getAllEventsByUserId(id);
+            List<Event> events = userDAO.getAllEventsByUserId(id, pageable);
             if (log.isDebugEnabled()) {
                 log.debug("Events are " + events);
             }
@@ -129,15 +127,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void addNewEvent(long userId, long eventId) {
-        log.debug("Call method addNewEvent() for " +
+    public void assignEvent(long userId, long eventId) {
+        log.debug("Call method assignEvent() for " +
                 "user id = " + userId + " and event id = " + eventId);
         try {
-            userDAO.addNewEvent(userId, eventId);
+            userDAO.assignEvent(userId, eventId);
             log.debug("Event with id = " + eventId + " is added in DB");
         } catch (DAOException ex) {
-            log.error(ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD, ex);
-            throw new ServiceException(ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD, ex);
+            log.error(ERROR_MESSAGE_FOR_ASSIGNEVENT_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_ASSIGNEVENT_METHOD, ex);
         }
     }
 

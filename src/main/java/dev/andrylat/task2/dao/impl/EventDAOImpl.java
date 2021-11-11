@@ -76,9 +76,8 @@ public class EventDAOImpl implements EventDAO {
     public Event getById(long id) {
         log.debug("Call method getById() with id = " + id);
 
-        Event event;
         try {
-            event = jdbcTemplate.queryForObject(
+            Event event = jdbcTemplate.queryForObject(
                     SQL_SELECT_EVENT_BY_ID,
                     eventRowMapper,
                     id
@@ -102,9 +101,8 @@ public class EventDAOImpl implements EventDAO {
 
         String sqlQuery = buildSqlQuery(page);
 
-        List<Event> events;
         try {
-            events = jdbcTemplate.query(
+            List<Event> events = jdbcTemplate.query(
                     sqlQuery,
                     eventRowMapper
             );
@@ -246,9 +244,8 @@ public class EventDAOImpl implements EventDAO {
     private List<String> convertToNames(List<Long> input) {
         log.debug("Call method convertToNames()");
 
-        List<String> names;
         try {
-            names = getCategoryNames(input);
+            List<String> names = getCategoryNames(input);
 
             return names;
         } catch (DataAccessException ex) {
@@ -260,9 +257,8 @@ public class EventDAOImpl implements EventDAO {
     private List<Long> getCategoryIDs(long id) {
         log.debug("Call method getCategoryIDs()");
 
-        List<Long> dataIDs;
         try {
-            dataIDs = jdbcTemplate.queryForList(
+            List<Long> dataIDs = jdbcTemplate.queryForList(
                     SQL_SELECT_ALL_CATEGORIES_BY_EVENT_ID,
                     Long.class,
                     id
@@ -290,7 +286,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
     @Override
-    public void addNewCategory(long eventId, long categoryId) {
+    public void assignCategory(long eventId, long categoryId) {
         log.debug("Call method addNewCategory()");
 
         try {

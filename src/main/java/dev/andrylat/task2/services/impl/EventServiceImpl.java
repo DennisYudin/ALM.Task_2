@@ -51,9 +51,8 @@ public class EventServiceImpl implements EventService {
 
         validateId(id);
 
-        Event event;
         try {
-            event = eventDAO.getById(id);
+            Event event = eventDAO.getById(id);
             if (log.isDebugEnabled()) {
                 log.debug("Event is " + event);
             }
@@ -79,9 +78,8 @@ public class EventServiceImpl implements EventService {
     public List<Event> findAll(Pageable pageable) {
         log.debug("Call method findAll()");
 
-        List<Event> events;
         try {
-            events = eventDAO.findAll(pageable);
+            List<Event> events = eventDAO.findAll(pageable);
             if (log.isDebugEnabled()) {
                 log.debug("Events are " + events);
             }
@@ -127,9 +125,8 @@ public class EventServiceImpl implements EventService {
 
         validateId(id);
 
-        List<String> categories;
         try {
-            categories = eventDAO.getAllCategoriesByEventId(id);
+            List<String> categories = eventDAO.getAllCategoriesByEventId(id);
             if (log.isDebugEnabled()) {
                 log.debug("Categories are " + categories);
             }
@@ -145,7 +142,7 @@ public class EventServiceImpl implements EventService {
         log.debug("Call method addNewCategory() for " +
                 "event id = " + eventId + " and category id = " + categoryId);
         try {
-            eventDAO.addNewCategory(eventId, categoryId);
+            eventDAO.assignCategory(eventId, categoryId);
             log.debug("Category with id = " + categoryId + " is added in DB");
         } catch (DAOException ex) {
             log.error(ERROR_MESSAGE_FOR_ADDNEWCATEGORY_METHOD, ex);
@@ -187,9 +184,8 @@ public class EventServiceImpl implements EventService {
     private Location getLocationById(long id) {
         log.debug("Call method getLocationById() with id = " + id);
 
-        Location location;
         try {
-            location = locationDAO.getById(id);
+            Location location = locationDAO.getById(id);
             if (log.isDebugEnabled()) {
                 log.debug("Location is " + location);
             }

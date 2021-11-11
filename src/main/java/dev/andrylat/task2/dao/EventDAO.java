@@ -8,7 +8,7 @@ public interface EventDAO extends GenericDAO<Event> {
 
     List<String> getAllCategoriesByEventId(long id);
 
-    void addNewCategory(long eventId, long categoryId);
+    void assignCategory(long eventId, long categoryId);
 
     void removeCategory(long eventId, long categoryId);
 }

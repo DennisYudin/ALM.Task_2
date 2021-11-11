@@ -1,6 +1,8 @@
 package dev.andrylat.task2.dao.impl;
 
+import dev.andrylat.task2.dao.EventDAO;
 import dev.andrylat.task2.dao.UserDAO;
+import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.entities.User;
 import dev.andrylat.task2.exceptions.DAOException;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
@@ -23,6 +25,10 @@ public class UserDAOImpl implements UserDAO {
     private static final String SQL_SELECT_USER_BY_ID = "SELECT * FROM users WHERE user_id = ?";
     private static final String SQL_SELECT_ALL_USERS_ORDER_BY = "SELECT * FROM users ORDER BY";
     private static final String SQL_SELECT_ALL_USERS_ORDER_BY_NAME = "SELECT * FROM users ORDER BY name";
+    private static final String SQL_SELECT_ALL_EVENTS_BY_USER_ID = "" +
+            "SELECT event_id " +
+            "FROM event_subscriptions " +
+            "WHERE user_id = ?";
     private static final String SQL_SAVE_USER = "" +
             "INSERT INTO users " +
             "(user_id, name, surname, email, login, password, type) " +
@@ -32,10 +38,6 @@ public class UserDAOImpl implements UserDAO {
             "SET name = ?, surname = ?, email = ?, login = ?, password = ?, type = ? " +
             "WHERE user_id = ?";
     private static final String SQL_DELETE_USER = "DELETE FROM users WHERE user_id = ?";
-    private static final String SQL_SELECT_ALL_EVENTS_BY_USER_ID = "" +
-            "SELECT event_id " +
-            "FROM event_subscriptions " +
-            "WHERE user_id = ?";
     private static final String SQL_ADD_NEW_EVENT = "" +
             "INSERT INTO event_subscriptions " +
             "(user_id, event_id) " +
@@ -56,7 +58,7 @@ public class UserDAOImpl implements UserDAO {
     private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
     private static final String ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD = "Error during call the method convertToNames()";
     private static final String ERROR_MESSAGE_FOR_GETEVENTIDS_METHOD = "Error during call the method getEventIDs()";
-    private static final String ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD = "Error during call the method addNewEvent()";
+    private static final String ERROR_MESSAGE_FOR_ASSIGNEVENT_METHOD = "Error during call the method assignEvent()";
     private static final String ERROR_MESSAGE_FOR_REMOVEEVENT_METHOD = "Error during call the method removeEvent()";
 
     private final JdbcTemplate jdbcTemplate;
@@ -69,13 +71,15 @@ public class UserDAOImpl implements UserDAO {
     @Autowired
     private UserRowMapper userRowMapper;
 
+    @Autowired
+    private EventDAO eventDAO;
+
     @Override
     public User getById(long id) {
         log.debug("Call method getById() with id = " + id);
 
-        User user;
         try {
-            user = jdbcTemplate.queryForObject(
+            User user = jdbcTemplate.queryForObject(
                     SQL_SELECT_USER_BY_ID,
                     userRowMapper,
                     id
@@ -86,7 +90,7 @@ public class UserDAOImpl implements UserDAO {
             return user;
         } catch (EmptyResultDataAccessException ex) {
             log.error(EMPTY_RESULT_MESSAGE + id, ex);
-            throw new DataNotFoundException(EMPTY_RESULT_MESSAGE, ex);
+            throw new DataNotFoundException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DataAccessException ex) {
             log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
             throw new DAOException(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
@@ -99,9 +103,8 @@ public class UserDAOImpl implements UserDAO {
 
         String sqlQuery = buildSqlQuery(page);
 
-        List<User> users;
         try {
-            users = jdbcTemplate.query(
+            List<User> users = jdbcTemplate.query(
                     sqlQuery,
                     userRowMapper
             );
@@ -149,7 +152,7 @@ public class UserDAOImpl implements UserDAO {
         long pageOffset = pageable.getOffset();
 
         String result = String.format(
-                SQL_SELECT_ALL_USERS_ORDER_BY + " %1$s %2$s LIMIT %3$s OFFSET %4$d",
+                SQL_SELECT_ALL_USERS_ORDER_BY + " %1$s %2$s LIMIT %3$d OFFSET %4$d",
                 sortProperty, sortDirectionName, pageSize, pageOffset);
 
         return result;
@@ -225,12 +228,12 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public List<String> getAllEventsByUserId(long id) {
+    public List<Event> getAllEventsByUserId(long id, Pageable pageable) {
         log.debug("Call method getAllEventsByUserId() for user with id = " + id);
 
-        List<Long> eventIDs = getEventIDs(id);
+        List<Long> eventIDs = getEventIDs(id, pageable);
 
-        List<String> events = convertToNames(eventIDs);
+        List<Event> events = getEvents(eventIDs);
 
         if (log.isDebugEnabled()) {
             log.debug("Events are " + events);
@@ -238,26 +241,27 @@ public class UserDAOImpl implements UserDAO {
         return events;
     }
 
-    private List<String> convertToNames(List<Long> input) {
-        log.debug("Call method convertToNames()");
+    private List<Event> getEvents(List<Long> input) {
+        log.debug("Call method getEventNames()");
 
-        List<String> names;
-        try {
-            names = getEventNames(input);
-        } catch (DataAccessException ex) {
-            log.error(ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD, ex);
-            throw new DAOException(ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD, ex);
+        List<Event> result = new ArrayList<>();
+
+        for (long id : input) {
+            Event event = eventDAO.getById(id);
+
+            result.add(event);
         }
-        return names;
+        return result;
     }
 
-    private List<Long> getEventIDs(long id) {
+    private List<Long> getEventIDs(long id, Pageable pageable) {
         log.debug("Call method getEventIDs()");
 
-        List<Long> dataIDs;
+        String sqlQuery = assembleSqlQuery(pageable);
+
         try {
-            dataIDs = jdbcTemplate.queryForList(
-                    SQL_SELECT_ALL_EVENTS_BY_USER_ID,
+            List<Long> dataIDs = jdbcTemplate.queryForList(
+                    sqlQuery,
                     Long.class,
                     id
             );
@@ -268,24 +272,33 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
-    private List<String> getEventNames(List<Long> inputData) {
-        log.debug("Call method getEventNames()");
+    private String assembleSqlQuery(Pageable pageable) {
+        log.debug("Call method createSqlQuery()");
 
-        List<String> result = new ArrayList<>();
-        for (long id : inputData) {
-            String eventName = jdbcTemplate.queryForObject(
-                    SQL_SELECT_EVENT_NAME_BY_ID,
-                    String.class,
-                    id
-            );
-            result.add(eventName);
+        String query = SQL_SELECT_ALL_EVENTS_BY_USER_ID;
+        if (pageable != null) {
+            query = assembleSqlQueryWithPageable(pageable);
         }
+        log.debug("SQL query is " + query);
+        return query;
+    }
+
+    private String assembleSqlQueryWithPageable(Pageable pageable) {
+        log.debug("Call method createSqlQueryWithPageable()");
+
+        int pageSize = pageable.getPageSize();
+        long pageOffset = pageable.getOffset();
+
+        String result = String.format(
+                SQL_SELECT_ALL_EVENTS_BY_USER_ID + " LIMIT %1$d OFFSET %2$d",
+                pageSize, pageOffset);
+
         return result;
     }
 
     @Override
-    public void addNewEvent(long userId, long eventId) {
-        log.debug("Call method addNewEvent()");
+    public void assignEvent(long userId, long eventId) {
+        log.debug("Call method assignEvent()");
 
         try {
             jdbcTemplate.update(
@@ -293,8 +306,8 @@ public class UserDAOImpl implements UserDAO {
                     userId, eventId
             );
         } catch (DataAccessException ex) {
-            log.error(ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD, ex);
-            throw new DAOException(ERROR_MESSAGE_FOR_ADDNEWEVENT_METHOD, ex);
+            log.error(ERROR_MESSAGE_FOR_ASSIGNEVENT_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_ASSIGNEVENT_METHOD, ex);
         }
     }
 

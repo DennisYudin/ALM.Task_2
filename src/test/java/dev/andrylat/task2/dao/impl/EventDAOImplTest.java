@@ -294,16 +294,15 @@ class EventDAOImplTest {
         int actualSize = actualCategoryNames.size();
 
         assertEquals(expectedSize, actualSize);
-        assertTrue(expectedCategoryNames.containsAll(actualCategoryNames));
     }
 
     @Test
-    void addNewCategory_ShouldAddNewCategory_WhenInputIsEventIdAndCategoryId() {
+    void assignCategory_ShouldAddNewCategory_WhenInputIsEventIdAndCategoryId() {
 
         long eventId = 1001;
         long categoryId = 1;
 
-        eventDAO.addNewCategory(eventId, categoryId);
+        eventDAO.assignCategory(eventId, categoryId);
 
         long checkEventId = 1001;
         long checkCategoryId = 1;
@@ -353,7 +352,7 @@ class EventDAOImplTest {
     }
 
     private Date getDate(String date) throws ParseException {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
 
         Date convertedDate = simpleDateFormat.parse(date);
 

@@ -1,6 +1,7 @@
 package dev.andrylat.task2.services.impl;
 
 import dev.andrylat.task2.dao.UserDAO;
+import dev.andrylat.task2.entities.Event;
 import dev.andrylat.task2.entities.User;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.exceptions.ServiceException;
@@ -14,8 +15,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -209,25 +212,106 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getAllEventsByUserId_ShouldReturnAllEvents_WhenInputIsUserId() {
+    void getAllEventsByUserId_ShouldReturnTwoEvents_WhenInputIsUserIdAndPageable() throws ParseException {
 
-        List<String> expectedEvents = new ArrayList<>(Arrays.asList("Oxxxymiron concert"));
+        Pageable pageable = PageRequest.of(0, 2);
 
-        Mockito.when(userDAO.getAllEventsByUserId(2000)).thenReturn(expectedEvents);
+        long userId = 2000;
 
-        List<String> actualEvents = userService.getAllEventsByUserId(2000);
+        List<Event> expectedEvents = new ArrayList<>();
 
-        assertTrue(expectedEvents.containsAll(actualEvents));
+        Date firstConcertDate = getDate("13-08-2021 18:23:00");
+        Event firstEvent = getEvent(
+                1000, "Oxxxymiron concert",
+                firstConcertDate, 5000,
+                "actual", "Oxxxymiron is",
+                101
+        );
+        Date secondConcertDate = getDate("14-09-2019 15:30:00");
+        Event secondEvent = getEvent(
+                1001, "Basta",
+                secondConcertDate, 1000,
+                "actual", "Bla bla bla",
+                100
+        );
+        expectedEvents.add(firstEvent);
+        expectedEvents.add(secondEvent);
+
+        Mockito.when(userDAO.getAllEventsByUserId(userId, pageable)).thenReturn(expectedEvents);
+
+        List<Event> actualEvents = userDAO.getAllEventsByUserId(userId, pageable);
+
+        assertTrue(actualEvents.containsAll(expectedEvents));
+    }
+
+    @Test
+    void getAllEventsByUserId_ShouldReturnTwoEvents_WhenInputIsUserIdAndPageableIsNull() throws ParseException {
+
+        Pageable pageable = null;
+
+        long userId = 2000;
+
+        List<Event> expectedEvents = new ArrayList<>();
+
+        Date firstConcertDate = getDate("13-08-2021 18:23:00");
+        Event firstEvent = getEvent(
+                1000, "Oxxxymiron concert",
+                firstConcertDate, 5000,
+                "actual", "Oxxxymiron is",
+                101
+        );
+        Date secondConcertDate = getDate("14-09-2019 15:30:00");
+        Event secondEvent = getEvent(
+                1001, "Basta",
+                secondConcertDate, 1000,
+                "actual", "Bla bla bla",
+                100
+        );
+        expectedEvents.add(firstEvent);
+        expectedEvents.add(secondEvent);
+
+        Mockito.when(userDAO.getAllEventsByUserId(userId, pageable)).thenReturn(expectedEvents);
+
+        List<Event> actualEvents = userDAO.getAllEventsByUserId(userId, pageable);
+
+        assertTrue(actualEvents.containsAll(expectedEvents));
+    }
+
+    @Test
+    void getAllEventsByUserId_ShouldReturnOneEvent_WhenInputIsUserIdAndPageableSizeOne() throws ParseException {
+
+        Pageable pageable = PageRequest.of(0, 1);
+
+        long userId = 2000;
+
+        List<Event> expectedEvents = new ArrayList<>();
+
+        Date firstConcertDate = getDate("13-08-2021 18:23:00");
+        Event firstEvent = getEvent(
+                1000, "Oxxxymiron concert",
+                firstConcertDate, 5000,
+                "actual", "Oxxxymiron is",
+                101
+        );
+        expectedEvents.add(firstEvent);
+
+        Mockito.when(userDAO.getAllEventsByUserId(userId, pageable)).thenReturn(expectedEvents);
+
+        List<Event> actualEvents = userDAO.getAllEventsByUserId(userId, pageable);
+
+        assertTrue(actualEvents.containsAll(expectedEvents));
     }
 
     @Test
     void getAllEventsByUserId_ShouldReturnEmptyList_WhenInputIsDoesNotExistUserId() {
 
-        List<String> expectedEvents = new ArrayList<>();
+        Pageable pageable = PageRequest.of(0, 2);
 
-        Mockito.when(userDAO.getAllEventsByUserId(165)).thenReturn(expectedEvents);
+        List<Event> expectedEvents = new ArrayList<>();
 
-        List<String> actualEvents = userService.getAllEventsByUserId(165);
+        Mockito.when(userDAO.getAllEventsByUserId(165, pageable)).thenReturn(expectedEvents);
+
+        List<Event> actualEvents = userService.getAllEventsByUserId(165, pageable);
 
         assertTrue(actualEvents.isEmpty());
     }
@@ -235,18 +319,20 @@ class UserServiceImplTest {
     @Test
     void getAllEventsByUserId_ShouldThrowServiceException_WhenInputHasNegativeId() {
 
-        assertThrows(ServiceException.class, () -> userService.getAllEventsByUserId(-1));
+        Pageable pageable = PageRequest.of(0, 2);
+
+        assertThrows(ServiceException.class, () -> userService.getAllEventsByUserId(-1, pageable));
     }
 
     @Test
-    void addNewEvent_ShouldAddNewEvent_WhenInputIsUserIdAndEventId() {
+    void assignEvent_ShouldAddNewEvent_WhenInputIsUserIdAndEventId() {
 
         long userId = 2001;
         long eventId = 1001;
 
-        userService.addNewEvent(2001, 1001);
+        userService.assignEvent(2001, 1001);
 
-        Mockito.verify(userDAO, Mockito.times(1)).addNewEvent(userId, eventId);
+        Mockito.verify(userDAO, Mockito.times(1)).assignEvent(userId, eventId);
     }
 
     @Test
@@ -273,6 +359,29 @@ class UserServiceImplTest {
         user.setPassword(password);
         user.setType(type);
         return user;
+    }
+
+    private Event getEvent(long id, String name,
+                           Date date, int price,
+                           String status, String desc,
+                           long foreignKey) {
+        Event event = new Event();
+        event.setId(id);
+        event.setTitle(name);
+        event.setDate(date);
+        event.setPrice(price);
+        event.setStatus(status);
+        event.setDescription(desc);
+        event.setLocationId(foreignKey);
+        return event;
+    }
+
+    private Date getDate(String date) throws ParseException {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+
+        Date convertedDate = simpleDateFormat.parse(date);
+
+        return convertedDate;
     }
 }
 

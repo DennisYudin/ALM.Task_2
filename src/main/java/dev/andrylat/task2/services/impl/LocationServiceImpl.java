@@ -32,9 +32,8 @@ public class LocationServiceImpl implements LocationService {
 
         validateId(id);
 
-        Location location;
         try {
-            location = locationDAO.getById(id);
+            Location location = locationDAO.getById(id);
             if (log.isDebugEnabled()) {
                 log.debug("Location is " + location);
             }
@@ -60,9 +59,8 @@ public class LocationServiceImpl implements LocationService {
     public List<Location> findAll(Pageable pageable) {
         log.debug("Call method findAll()");
 
-        List<Location> locations;
         try {
-            locations = locationDAO.findAll(pageable);
+            List<Location> locations = locationDAO.findAll(pageable);
             if (log.isDebugEnabled()) {
                 log.debug("Locations are " + locations);
             }

@@ -273,7 +273,7 @@ public class UserDAOImpl implements UserDAO {
     }
 
     private String assembleSqlQuery(Pageable pageable) {
-        log.debug("Call method createSqlQuery()");
+        log.debug("Call method assembleSqlQuery()");
 
         String query = SQL_SELECT_ALL_EVENTS_BY_USER_ID;
         if (pageable != null) {
@@ -284,7 +284,7 @@ public class UserDAOImpl implements UserDAO {
     }
 
     private String assembleSqlQueryWithPageable(Pageable pageable) {
-        log.debug("Call method createSqlQueryWithPageable()");
+        log.debug("Call method assembleSqlQueryWithPageable()");
 
         int pageSize = pageable.getPageSize();
         long pageOffset = pageable.getOffset();

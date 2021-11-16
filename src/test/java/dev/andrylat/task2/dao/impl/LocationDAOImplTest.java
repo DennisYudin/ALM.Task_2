@@ -3,27 +3,34 @@ package dev.andrylat.task2.dao.impl;
 import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.LocationDAO;
 import dev.andrylat.task2.entities.Location;
+import dev.andrylat.task2.exceptions.DataNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = AppConfigTest.class)
-@Sql(scripts = {"file:src/test/resources/createTables.sql",
+@Sql(scripts = {
+        "file:src/test/resources/createTables.sql",
         "file:src/test/resources/populateTables.sql"},
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class LocationDAOImplTest {
-    private static final String SQL_SELECT_LOCATION_ID = "SELECT location_id " +
+    private static final String SQL_SELECT_LOCATION_ID = "" +
+            "SELECT location_id " +
             "FROM locations " +
             "WHERE name = ? AND working_hours = ? AND type = ? AND address = ? AND description = ? AND capacity_people = ?";
     private static final String SQL_SELECT_ALL_LOCATIONS_ID = "SELECT location_id FROM locations";
@@ -35,49 +42,135 @@ public class LocationDAOImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    public void getById_ShouldGetLocationById_WhenInputIsId() {
+    public void getById_ShouldReturnLocation_WhenInputIsExistId() {
 
-        long id = 100;
+        Location expectedLocation = getLocation(
+                100, "Drunk oyster",
+                "08:00-22:00", "bar",
+                "FooBar street", "description test", 300);
 
-        String expectedName = "Drunk oyster";
-        String expectedWorkingHours = "08:00-22:00";
-        String expectedType = "bar";
-        String expectedAddress = "FooBar street";
-        String expectedDescription = "description test";
-        int expectedCapacityPeople = 300;
+        Location actualLocation = locationDAO.getById(100);
 
-        String actualName = locationDAO.getById(id).getTitle();
-        String actualWorkingHours = locationDAO.getById(id).getWorkingHours();
-        String actualType = locationDAO.getById(id).getType();
-        String actualAddress = locationDAO.getById(id).getAddress();
-        String actualDescription = locationDAO.getById(id).getDescription();
-        int actualCapacityPeople = locationDAO.getById(id).getCapacityPeople();
-
-        assertEquals(expectedName, actualName);
-        assertEquals(expectedWorkingHours, actualWorkingHours);
-        assertEquals(expectedType, actualType);
-        assertEquals(expectedAddress, actualAddress);
-        assertEquals(expectedDescription, actualDescription);
-        assertEquals(expectedCapacityPeople, actualCapacityPeople);
+        assertEquals(expectedLocation, actualLocation);
     }
 
     @Test
-    public void findAll_ShouldGetAllLocations_WhenCallMethod() {
+    public void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
 
-        List<Location> actualLocations = locationDAO.findAll();
-        List<Long> expectedId = jdbcTemplate.queryForList(
-                SQL_SELECT_ALL_LOCATIONS_ID,
-                Long.class
-        );
-        int expectedSize = expectedId.size();
-        int actualSize = actualLocations.size();
+        assertThrows(DataNotFoundException.class, () -> locationDAO.getById(-1));
+    }
 
-        assertEquals(expectedSize, actualSize);
+    @Test
+    public void findAll_ShouldReturnAllLocationsSortedByName_WhenInputIsPageRequestWithoutSort() {
 
-        for (Location location : actualLocations) {
-            long actualLocationId = location.getId();
+        Pageable sortedByName = PageRequest.of(0, 2);
 
-            assertTrue(expectedId.contains(actualLocationId));
+        List<Location> actualLocations = locationDAO.findAll(sortedByName);
+        List<Location> expectedLocations = new ArrayList<>();
+
+        Location firstLocation = getLocation(
+                100, "Drunk oyster",
+                "08:00-22:00", "bar",
+                "FooBar street", "description test", 300);
+
+        Location secondLocation = getLocation(
+                101, "Moes", "06:00-00:00",
+                "tavern", "the great street",
+                "description bla bla bla for test", 750);
+
+        expectedLocations.add(firstLocation);
+        expectedLocations.add(secondLocation);
+
+        for (int i = 0; i < actualLocations.size(); i++) {
+
+            Location actualLocation = actualLocations.get(i);
+            Location expectedLocation = expectedLocations.get(i);
+
+            assertEquals(expectedLocation, actualLocation);
+        }
+    }
+
+    @Test
+    public void findAll_ShouldReturnAllLocationsSortedByLocationId_WhenInputIsPageRequestWithSortValue() {
+
+        Pageable sortedById = PageRequest.of(0, 2, Sort.by("location_id"));
+
+        List<Location> actualLocations = locationDAO.findAll(sortedById);
+        List<Location> expectedLocations = new ArrayList<>();
+
+        Location firstLocation = getLocation(
+                100, "Drunk oyster",
+                "08:00-22:00", "bar",
+                "FooBar street", "description test", 300);
+
+        Location secondLocation = getLocation(
+                101, "Moes", "06:00-00:00",
+                "tavern", "the great street",
+                "description bla bla bla for test", 750);
+
+        expectedLocations.add(firstLocation);
+        expectedLocations.add(secondLocation);
+
+        for (int i = 0; i < actualLocations.size(); i++) {
+
+            Location actualLocation = actualLocations.get(i);
+            Location expectedLocation = expectedLocations.get(i);
+
+            assertEquals(expectedLocation, actualLocation);
+        }
+    }
+
+    @Test
+    public void findAll_ShouldReturnAllEventsSortedByName_WhenPageIsNull() {
+
+        Pageable page = null;
+
+        List<Location> actualLocations = locationDAO.findAll(page);
+        List<Location> expectedLocations = new ArrayList<>();
+
+        Location firstLocation = getLocation(
+                100, "Drunk oyster",
+                "08:00-22:00", "bar",
+                "FooBar street", "description test", 300);
+
+        Location secondLocation = getLocation(
+                101, "Moes", "06:00-00:00",
+                "tavern", "the great street",
+                "description bla bla bla for test", 750);
+
+        expectedLocations.add(firstLocation);
+        expectedLocations.add(secondLocation);
+
+        for (int i = 0; i < actualLocations.size(); i++) {
+
+            Location actualLocation = actualLocations.get(i);
+            Location expectedLocation = expectedLocations.get(i);
+
+            assertEquals(expectedLocation, actualLocation);
+        }
+    }
+
+    @Test
+    public void findAll_ShouldReturnOneLocationSortedByName_WhenInputIsPageWithSizeOne() {
+
+        Pageable sortedById = PageRequest.of(0, 1);
+
+        List<Location> actualLocations = locationDAO.findAll(sortedById);
+        List<Location> expectedLocations = new ArrayList<>();
+
+        Location firstLocation = getLocation(
+                100, "Drunk oyster",
+                "08:00-22:00", "bar",
+                "FooBar street", "description test", 300);
+
+        expectedLocations.add(firstLocation);
+
+        for (int i = 0; i < actualLocations.size(); i++) {
+
+            Location actualLocation = actualLocations.get(i);
+            Location expectedLocation = expectedLocations.get(i);
+
+            assertEquals(expectedLocation, actualLocation);
         }
     }
 
@@ -103,15 +196,15 @@ public class LocationDAOImplTest {
         long expectedId = 102;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_LOCATION_ID,
-                new Object[]{checkName, checkWorkingHours, checkType,
-                        checkAddress, checkDescription, checkCapacityPeople},
-                Long.class
+                Long.class,
+                checkName, checkWorkingHours, checkType,
+                checkAddress, checkDescription, checkCapacityPeople
         );
         assertEquals(expectedId, actualId);
     }
 
     @Test
-    public void update_ShouldUpdateExistedLocation_WhenInputIsLocationObjectWithDetails() {
+    public void save_ShouldUpdateExistedLocation_WhenInputIsLocationObjectWithDetails() {
 
         Location updatedLocation = getLocation(
                 100, "Green sleeve",
@@ -120,7 +213,7 @@ public class LocationDAOImplTest {
                 1200
         );
 
-        locationDAO.update(updatedLocation);
+        locationDAO.save(updatedLocation);
 
         String checkName = "Green sleeve";
         String checkWorkingHours = "10:00-15:00";
@@ -132,9 +225,9 @@ public class LocationDAOImplTest {
         long expectedId = 100;
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_LOCATION_ID,
-                new Object[]{checkName, checkWorkingHours, checkType,
-                        checkAddress, checkDescription, checkCapacityPeople},
-                Long.class
+                Long.class,
+                checkName, checkWorkingHours, checkType,
+                checkAddress, checkDescription, checkCapacityPeople
         );
         assertEquals(expectedId, actualId);
     }

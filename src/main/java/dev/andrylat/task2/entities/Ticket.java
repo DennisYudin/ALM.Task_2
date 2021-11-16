@@ -6,7 +6,6 @@ import java.util.Date;
 
 @Data
 public class Ticket {
-
     private long id;
     private String eventName;
     private String uniqueCode;
@@ -14,5 +13,6 @@ public class Ticket {
     private String status;
     private long userId;
     private long eventId;
+
 }
 

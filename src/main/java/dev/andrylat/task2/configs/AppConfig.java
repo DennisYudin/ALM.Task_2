@@ -1,62 +1,116 @@
 package dev.andrylat.task2.configs;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.PropertySources;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.web.servlet.ViewResolver;
-import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver;
+import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 
 import javax.sql.DataSource;
 
 @Configuration
-//@EnableWebMvc
+@EnableWebMvc
 @ComponentScan(basePackages = "dev.andrylat.task2")
-@PropertySource("classpath:persistence-postgresql.properties")
-public class AppConfig {
+@PropertySources({
+		@PropertySource("classpath:jdbc-connection-postgresql.properties"),
+		@PropertySource("classpath:admin-jdbc-connection-postgresql.properties")
+})
+public class AppConfig implements WebMvcConfigurer {
+	@Autowired
+	private Environment propertyDataHolder;
+	@Autowired
+	private ApplicationContext applicationContext;
 
-    @Autowired
-    private Environment propertyDataHolder;
+	@Bean
+	public SpringResourceTemplateResolver templateResolver() {
 
-    @Bean
-    public ViewResolver viewResolver() {
+		SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
 
-        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+		templateResolver.setApplicationContext(applicationContext);
+		templateResolver.setPrefix("/WEB-INF/views/");
+		templateResolver.setSuffix(".html");
 
-        viewResolver.setPrefix("/WEB-INF/views/");
-        viewResolver.setSuffix(".jsp");
+		return templateResolver;
+	}
 
-        return viewResolver;
-    }
+	@Bean
+	public SpringTemplateEngine templateEngine() {
 
-    @Bean
-    public DataSource dataSource() {
+		SpringTemplateEngine templateEngine = new SpringTemplateEngine();
 
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+		templateEngine.setTemplateResolver(templateResolver());
+		templateEngine.setEnableSpringELCompiler(true);
 
-        String jdbcDriver = propertyDataHolder.getProperty("jdbc.driver");
-        String jdbcUrl = propertyDataHolder.getProperty("jdbc.url");
-        String jdbcUser = propertyDataHolder.getProperty("jdbc.user");
-        String jdbcPassword = propertyDataHolder.getProperty("jdbc.password");
+		return templateEngine;
+	}
 
-        dataSource.setDriverClassName(jdbcDriver);
-        dataSource.setUrl(jdbcUrl);
-        dataSource.setUsername(jdbcUser);
-        dataSource.setPassword(jdbcPassword);
+	@Override
+	public void configureViewResolvers(ViewResolverRegistry registry) {
 
-        return dataSource;
-    }
+		ThymeleafViewResolver resolver = new ThymeleafViewResolver();
 
-    @Bean
-    public JdbcTemplate JdbcTemplate() {
+		resolver.setTemplateEngine(templateEngine());
+		registry.viewResolver(resolver);
+	}
 
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource());
+//    @Bean
+//    public ViewResolver viewResolver() {
+//
+//        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+//
+//        viewResolver.setPrefix("/WEB-INF/views/");
+//        viewResolver.setSuffix(".jsp");
+//        viewResolver.setOrder(2);
+//
+//        return viewResolver;
+//    }
 
-        return jdbcTemplate;
-    }
+	@Bean
+	public DataSource dataSource() {
+
+		DriverManagerDataSource dataSource = new DriverManagerDataSource();
+
+		String jdbcDriver = propertyDataHolder.getProperty("jdbc.driver");
+		String jdbcUrl = propertyDataHolder.getProperty("jdbc.url");
+		String jdbcUser = propertyDataHolder.getProperty("jdbc.user");
+		String jdbcPassword = propertyDataHolder.getProperty("jdbc.password");
+
+		dataSource.setDriverClassName(jdbcDriver);
+		dataSource.setUrl(jdbcUrl);
+		dataSource.setUsername(jdbcUser);
+		dataSource.setPassword(jdbcPassword);
+
+		return dataSource;
+	}
+
+	@Bean
+	public DataSource adminDataSource() {
+		DriverManagerDataSource dataSource = new DriverManagerDataSource();
+		String jdbcDriver = propertyDataHolder.getProperty("admin.jdbc.driver");
+		String jdbcUrl = propertyDataHolder.getProperty("admin.jdbc.url");
+		String jdbcUser = propertyDataHolder.getProperty("admin.jdbc.user");
+		String jdbcPassword = propertyDataHolder.getProperty("admin.jdbc.password");
+		dataSource.setDriverClassName(jdbcDriver);
+		dataSource.setUrl(jdbcUrl);
+		dataSource.setUsername(jdbcUser);
+		dataSource.setPassword(jdbcPassword);
+		return dataSource;
+	}
+
+	@Bean
+	public JdbcTemplate jdbcTemplate() {
+		return new JdbcTemplate(dataSource());
+	}
 }
 

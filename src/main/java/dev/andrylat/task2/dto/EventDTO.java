@@ -39,7 +39,6 @@ public class EventDTO {
         this.capacityPeople = builder.getCapacityPeople();
     }
 
-
     public static class Builder {
         private long id;
         private String name;

@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@WebAppConfiguration
 class EventDAOImplTest {
     private static final String SQL_SELECT_EVENT_ID = "" +
             "SELECT event_id " +
@@ -45,11 +47,14 @@ class EventDAOImplTest {
             "FROM events_categories " +
             "WHERE event_id = ? AND category_id = ?";
 
-    @Autowired
     private EventDAO eventDAO;
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    EventDAOImplTest(EventDAO eventDAO, JdbcTemplate jdbcTemplate) {
+        this.eventDAO = eventDAO;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @Test
     void getById_ShouldReturnEvent_WhenInputIsExistIdValue() throws ParseException {
@@ -66,7 +71,7 @@ class EventDAOImplTest {
     }
 
     @Test
-    void getById_ShouldThrowDataNotFoundException_WhenInputIsDoesNotExistId() throws ParseException {
+    void getById_ShouldThrowDataNotFoundException_WhenInputIsDoesNotExistId() {
 
         assertThrows(DataNotFoundException.class, () -> eventDAO.getById(-1000));
     }
@@ -166,9 +171,7 @@ class EventDAOImplTest {
     @Test
     void findAll_ShouldReturnAllEventsSortedByName_WhenPageIsNull() throws ParseException {
 
-        Pageable page = null;
-
-        List<Event> actualEvents = eventDAO.findAll(page);
+        List<Event> actualEvents = eventDAO.findAll(null);
         List<Event> expectedEvents = new ArrayList<>();
 
         Date firstConcertDate = getDate("14-09-2019 15:30:00");
@@ -209,7 +212,6 @@ class EventDAOImplTest {
         eventDAO.save(event);
 
         String checkName = "Leonid Agutin";
-        Date checkDate = concertDate;
         int checkPrice = 10000;
         String checkStatus = "cancelled";
         String checkDesc = "Wonderful concert...";
@@ -219,7 +221,7 @@ class EventDAOImplTest {
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_EVENT_ID,
                 Long.class,
-                checkName, checkDate, checkPrice,
+                checkName, concertDate, checkPrice,
                 checkStatus, checkDesc, checkForeignKey
         );
         assertEquals(expectedId, actualId);
@@ -241,7 +243,6 @@ class EventDAOImplTest {
         eventDAO.save(updatedEvent);
 
         String checkName = "Leonid Agutin";
-        Date checkDate = date;
         int checkPrice = 1_000_000;
         String checkStatus = "cancelled";
         String checkDesc = "Wonderful concert...";
@@ -251,7 +252,7 @@ class EventDAOImplTest {
         Long actualId = jdbcTemplate.queryForObject(
                 SQL_SELECT_EVENT_ID,
                 Long.class,
-                checkName, checkDate, checkPrice,
+                checkName, date, checkPrice,
                         checkStatus, checkDesc, checkForeignKey
         );
         assertEquals(expectedId, actualId);
@@ -272,7 +273,7 @@ class EventDAOImplTest {
         int expectedSize = 1;
         int actualSize = actualId.size();
 
-        int checkedId = 1000;
+        Long checkedId = 1000L;
 
         assertEquals(expectedSize, actualSize);
         assertFalse(actualId.contains(checkedId));
@@ -352,10 +353,7 @@ class EventDAOImplTest {
     }
 
     private Date getDate(String date) throws ParseException {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
-
-        Date convertedDate = simpleDateFormat.parse(date);
-
-        return convertedDate;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+        return dateFormat.parse(date);
     }
 }

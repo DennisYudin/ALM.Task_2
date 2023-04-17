@@ -58,7 +58,7 @@ public class EventServiceImpl implements EventService {
             }
             return event;
         } catch (DataNotFoundException ex) {
-            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            log.warn(EMPTY_RESULT_MESSAGE + id, ex);
             throw new ServiceException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DAOException ex) {
             log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
@@ -191,7 +191,7 @@ public class EventServiceImpl implements EventService {
             }
             return location;
         } catch (DataNotFoundException ex) {
-            log.error(EMPTY_RESULT_MESSAGE_FOR_GETLOCATIONBYID_METHOD + id, ex);
+            log.warn(EMPTY_RESULT_MESSAGE_FOR_GETLOCATIONBYID_METHOD + id, ex);
             throw new ServiceException(EMPTY_RESULT_MESSAGE_FOR_GETLOCATIONBYID_METHOD + id, ex);
         } catch (DAOException ex) {
             log.error(ERROR_MESSAGE_FOR_FOR_GETLOCATIONBYID_METHOD, ex);

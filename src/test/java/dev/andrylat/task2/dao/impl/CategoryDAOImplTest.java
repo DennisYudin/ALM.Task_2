@@ -4,42 +4,132 @@ import dev.andrylat.task2.configs.AppConfigTest;
 import dev.andrylat.task2.dao.CategoryDAO;
 import dev.andrylat.task2.entities.Category;
 import dev.andrylat.task2.exceptions.DataNotFoundException;
+import dev.andrylat.task2.services.CategoryService;
+import org.aspectj.lang.annotation.Before;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = AppConfigTest.class)
 @Sql(scripts = {
+//        "file:src/test/resources/createDataBase.sql",
         "file:src/test/resources/createTables.sql",
         "file:src/test/resources/populateTables.sql"},
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "file:src/test/resources/cleanUpTables.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@WebAppConfiguration
 class CategoryDAOImplTest {
     private static final String SQL_SELECT_CATEGORY_ID = "SELECT category_id FROM categories WHERE name = ?";
     private static final String SQL_SELECT_ALL_CATEGORIES_ID = "SELECT category_id FROM categories";
 
     @Autowired
     private CategoryDAO categoryDAO;
-
+    @Autowired
+    private CategoryService categoryService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Test
+    void pageTest() {
+        int pageNo = 1;
+        int pageSize = 2;
+
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+//        Pageable pageable = null;
+
+        List<Category> categories = categoryService.findAll(null);
+
+        int allElements = categories.size();
+
+        int amountPages = (int) Math.ceil((double) allElements / pageSize);
+
+        Page<Category> categoriesPage = new PageImpl<>(categories);
+
+        System.out.println();
+        System.out.println("page content: " + categoriesPage.getContent());
+        System.out.println("currentPage: " + pageNo);
+        System.out.println("totalPages: " + categoriesPage.getTotalPages());
+        System.out.println("totalItems: " + categoriesPage.getTotalElements());
+        System.out.println("amountPages:" + amountPages);
+
+        if (amountPages > 0) {
+            List<Integer> pageNumbers = IntStream
+                    .rangeClosed(1, amountPages)
+                    .boxed()
+                    .collect(toList());
+            System.out.println("pageNumbers: " + pageNumbers);
+        }
+        System.out.println();
+    }
+
+    @BeforeAll
+    public static void initDB(){
+        initDatabase();
+    }
+
+    public static void initDatabase() {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/", "postgres", "1234");
+            statement = connection.createStatement();
+            statement.executeQuery("SELECT count(*) FROM pg_database WHERE datname = 'mydb'");
+            ResultSet resultSet = statement.getResultSet();
+            resultSet.next();
+            int count = resultSet.getInt(1);
+
+            if (count <= 0) {
+                statement.executeUpdate("CREATE DATABASE database_name");
+                System.out.println("Database created.");
+            } else {
+                System.out.println("Database already exist.");
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+            }
+        }
+    }
+
+    @Test
     void getById_ShouldReturnCategory_WhenInputIsExistIdValue() {
+
+//        initDatabase();
 
         Category expectedCategory = getCategory(1, "exhibition");
         Category actualCategory = categoryDAO.getById(1);
@@ -51,6 +141,72 @@ class CategoryDAOImplTest {
     void getById_ShouldThrowDataNotFoundException_WhenInputIsIncorrectId() {
 
         assertThrows(DataNotFoundException.class, () -> categoryDAO.getById(-1));
+    }
+
+    @Test
+    void getByName_ShouldReturnCategory_WhenInputIsThreeFirstLettersOfCategory() {
+
+        Category category = getCategory(1, "exhibition");
+
+        List<Category> actualCategories = categoryDAO.getByName("exh");
+        List<Category> expectedCategories = new ArrayList<>();
+
+        expectedCategories.add(category);
+
+        assertEquals(expectedCategories.size(), actualCategories.size());
+        assertTrue(expectedCategories.containsAll(actualCategories));
+    }
+
+    @Test
+    void getByName_ShouldReturnCategory_WhenInputIsCategoryName() {
+
+        Category category = getCategory(1, "exhibition");
+
+        List<Category> actualCategories = categoryDAO.getByName("exhibition");
+        List<Category> expectedCategories = new ArrayList<>();
+
+        expectedCategories.add(category);
+
+        assertEquals(expectedCategories.size(), actualCategories.size());
+        assertTrue(expectedCategories.containsAll(actualCategories));
+    }
+
+    @Test
+    void getByName_ShouldEmptyList_WhenInputIsDoesNotExistCategoryName() {
+
+        List<Category> actualCategories = categoryDAO.getByName("DoesNotExistValue");
+
+        assertTrue(actualCategories.isEmpty());
+    }
+
+    @Test
+    void getAutoGeneratedKeyTest() {
+
+        String name = "movie";
+
+        KeyHolder keyHolder = getAutoGeneratedKey(name);
+
+        assertEquals(5, keyHolder.getKey());
+
+    }
+
+    public KeyHolder getAutoGeneratedKey(String name) {
+        String sqlQuery = "INSERT INTO categories (name) VALUES (?)";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(
+                new PreparedStatementCreator() {
+                    public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+                        PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[]{"category_id"});
+
+                        ps.setString(1, name);
+
+                        return ps;
+                    }
+                }, keyHolder);
+
+        return keyHolder;
     }
 
     @Test
@@ -141,7 +297,7 @@ class CategoryDAOImplTest {
     @Test
     void save_ShouldSaveCategory_WhenInputIsCategoryObjectWithIdAndName() {
 
-        Category newCategory = getCategory(5, "opera");
+        Category newCategory = getCategory(0, "opera");
 
         categoryDAO.save(newCategory);
 

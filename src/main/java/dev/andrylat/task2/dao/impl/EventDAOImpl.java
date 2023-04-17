@@ -55,7 +55,7 @@ public class EventDAOImpl implements EventDAO {
     private static final String EMPTY_RESULT_MESSAGE = "There is no such event with id = ";
     private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
     private static final String ERROR_MESSAGE_FOR_SAVEEVENT_METHOD = "Error during call the method saveEvent()";
-    private static final String ERROR_MESSAGE_FOR_UPDATEEVENT_METHOD = "Error during call the method updateEvent()";
+    private static final String ERROR_MESSAGE_FOR_UPDATE_EVENT_METHOD = "Error during call the method updateEvent()";
     private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
     private static final String ERROR_MESSAGE_FOR_CONVERTTONAMES_METHOD = "Error during call the method convertToNames()";
     private static final String ERROR_MESSAGE_FOR_GETCATEGORYIDS_METHOD = "Error during call the method getCategoryIDs()";
@@ -87,7 +87,7 @@ public class EventDAOImpl implements EventDAO {
             }
             return event;
         } catch (EmptyResultDataAccessException ex) {
-            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            log.warn(EMPTY_RESULT_MESSAGE + id, ex);
             throw new DataNotFoundException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DataAccessException ex) {
             log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
@@ -192,7 +192,15 @@ public class EventDAOImpl implements EventDAO {
 
     public void updateEvent(Event event) {
         log.debug("Call method updateEvent() for event with id = " + event.getId());
+        try {
+            update(event);
+        } catch (DataAccessException ex) {
+            log.error(ERROR_MESSAGE_FOR_UPDATE_EVENT_METHOD, ex);
+            throw new DAOException(ERROR_MESSAGE_FOR_UPDATE_EVENT_METHOD, ex);
+        }
+    }
 
+    private void update(Event event) {
         long id = event.getId();
         String title = event.getTitle();
         Date date = event.getDate();
@@ -200,16 +208,11 @@ public class EventDAOImpl implements EventDAO {
         String status = event.getStatus();
         String description = event.getDescription();
         long locationId = event.getLocationId();
-
-        try {
-            jdbcTemplate.update(
-                    SQL_UPDATE_EVENT,
-                    title, date, price, status, description, locationId, id
-            );
-        } catch (DataAccessException ex) {
-            log.error(ERROR_MESSAGE_FOR_UPDATEEVENT_METHOD, ex);
-            throw new DAOException(ERROR_MESSAGE_FOR_UPDATEEVENT_METHOD, ex);
-        }
+        
+        jdbcTemplate.update(
+                SQL_UPDATE_EVENT,
+                title, date, price, status, description, locationId, id
+        );
     }
 
     @Override
@@ -217,14 +220,18 @@ public class EventDAOImpl implements EventDAO {
         log.debug("Call method delete() for event with id = " + id);
 
         try {
-            jdbcTemplate.update(
-                    SQL_DELETE_EVENT,
-                    id
-            );
+            deleteEvent(id);
         } catch (DataAccessException ex) {
             log.error(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
             throw new DAOException(ERROR_MESSAGE_FOR_DELETE_METHOD, ex);
         }
+    }
+
+    private void deleteEvent(long id) {
+        jdbcTemplate.update(
+                SQL_DELETE_EVENT,
+                id
+        );
     }
 
     @Override

@@ -89,7 +89,7 @@ public class UserDAOImpl implements UserDAO {
             }
             return user;
         } catch (EmptyResultDataAccessException ex) {
-            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            log.warn(EMPTY_RESULT_MESSAGE + id, ex);
             throw new DataNotFoundException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DataAccessException ex) {
             log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
@@ -171,24 +171,19 @@ public class UserDAOImpl implements UserDAO {
 
     public void saveUser(User user) {
         log.debug("Call method saveUser()");
-
-        long id = user.getId();
-        String name = user.getName();
-        String surname = user.getSurname();
-        String email = user.getEmail();
-        String login = user.getLogin();
-        String password = user.getPassword();
-        String type = user.getType();
-
         try {
-            jdbcTemplate.update(
-                    SQL_SAVE_USER,
-                    id, name, surname, email, login, password, type
-            );
+            updateInDB(user);
         } catch (DataAccessException ex) {
             log.error(ERROR_MESSAGE_FOR_SAVEUSER_METHOD, ex);
             throw new DAOException(ERROR_MESSAGE_FOR_SAVEUSER_METHOD, ex);
         }
+    }
+
+    private void updateInDB(User user) {
+        jdbcTemplate.update(
+                SQL_SAVE_USER,
+                user.getId(), user.getName(), user.getSurname(), user.getEmail(), user.getLogin(), user.getPassword(), user.getType()
+        );
     }
 
     public void updateUser(User user) {

@@ -1,7 +1,13 @@
 package dev.andrylat.task2.services;
 
 import dev.andrylat.task2.entities.Category;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-public interface CategoryService extends GenericService<Category> {
+import java.util.List;
+
+public interface CategoryService extends GenericService<Category>{
+
+    List<Category> getByName(String name);
 
 }

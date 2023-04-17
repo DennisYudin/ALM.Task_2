@@ -8,6 +8,8 @@ import dev.andrylat.task2.exceptions.ServiceException;
 import dev.andrylat.task2.services.CategoryService;
 import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +19,9 @@ import java.util.List;
 @Service
 public class CategoryServiceImpl implements CategoryService {
     private static final String ERROR_MESSAGE_FOR_GETBYID_METHOD = "Error during call the method getById()";
+    private static final String ERROR_MESSAGE_FOR_GETBYNAME_METHOD = "Error during call the method getByName()";
     private static final String ERROR_MESSAGE_FOR_VALIDATE_METHOD = "id can not be less or equals zero";
-    private static final String EMPTY_RESULT_MESSAGE = "There is no such category with id = ";
+    private static final String EMPTY_RESULT_MESSAGE = "There is no such category with such input = ";
     private static final String ERROR_MESSAGE_FOR_FINDALL_METHOD = "Error during call the method findAll()";
     private static final String ERROR_MESSAGE_FOR_SAVE_METHOD = "Error during call the method save()";
     private static final String ERROR_MESSAGE_FOR_DELETE_METHOD = "Error during call the method delete()";
@@ -26,6 +29,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private CategoryDAO categoryDAO;
 
+    @Override
     public Category getById(long id) {
         log.debug("Call method getById() with id = " + id);
 
@@ -38,7 +42,7 @@ public class CategoryServiceImpl implements CategoryService {
             }
             return category;
         } catch (DataNotFoundException ex) {
-            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            log.warn(EMPTY_RESULT_MESSAGE + id, ex);
             throw new ServiceException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DAOException ex) {
             log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);
@@ -54,11 +58,32 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
+    @Override
+    public List<Category> getByName(String name) {
+        log.debug("Call method getByName() with name = " + name);
+
+        try {
+            List<Category> category = categoryDAO.getByName(name);
+            if (log.isDebugEnabled()) {
+                log.debug("Category is " + category);
+            }
+            return category;
+        } catch (DataNotFoundException ex) {
+            log.warn(EMPTY_RESULT_MESSAGE + name, ex);
+            throw new ServiceException(EMPTY_RESULT_MESSAGE + name, ex);
+        } catch (DAOException ex) {
+            log.error(ERROR_MESSAGE_FOR_GETBYNAME_METHOD, ex);
+            throw new ServiceException(ERROR_MESSAGE_FOR_GETBYNAME_METHOD, ex);
+        }
+    }
+
+    @Override
     public List<Category> findAll(Pageable pageable) {
         log.debug("Call method findAll()");
 
         try {
             List<Category> categories = categoryDAO.findAll(pageable);
+
             if (log.isDebugEnabled()) {
                 log.debug("Categories are " + categories);
             }
@@ -69,10 +94,9 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
+    @Override
     public void save(Category category) {
         log.debug("Call method save() for category with id = " + category.getId());
-
-        validateId(category.getId());
 
         try {
             categoryDAO.save(category);
@@ -82,6 +106,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
+    @Override
     public void delete(long id) {
         log.debug("Call method delete() with id = " + id);
 

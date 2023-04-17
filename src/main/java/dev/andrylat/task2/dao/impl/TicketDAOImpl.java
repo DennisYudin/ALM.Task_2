@@ -69,7 +69,7 @@ public class TicketDAOImpl implements TicketDAO {
             }
             return ticket;
         } catch (EmptyResultDataAccessException ex) {
-            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            log.warn(EMPTY_RESULT_MESSAGE + id, ex);
             throw new DataNotFoundException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DataAccessException ex) {
             log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);

@@ -39,7 +39,7 @@ public class LocationServiceImpl implements LocationService {
             }
             return location;
         } catch (DataNotFoundException ex) {
-            log.error(EMPTY_RESULT_MESSAGE + id, ex);
+            log.warn(EMPTY_RESULT_MESSAGE + id, ex);
             throw new ServiceException(EMPTY_RESULT_MESSAGE + id, ex);
         } catch (DAOException ex) {
             log.error(ERROR_MESSAGE_FOR_GETBYID_METHOD, ex);

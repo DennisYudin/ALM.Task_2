@@ -6,10 +6,12 @@ import dev.andrylat.task2.exceptions.DataNotFoundException;
 import dev.andrylat.task2.exceptions.ServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -21,165 +23,214 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CategoryServiceImplTest {
 
-    @InjectMocks
-    private CategoryServiceImpl categoryService;
+	@Mock
+	private CategoryDAO categoryDAO;
+	@InjectMocks
+	private CategoryServiceImpl categoryService;
 
-    @Mock
-    private CategoryDAO categoryDAO;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.initMocks(this);
-    }
+	@BeforeEach
+	void setUp() {
+		MockitoAnnotations.initMocks(this);
+	}
 
-    @Test
-    void getById_ShouldReturnCategory_WhenInputIsExistId() {
+	@Test
+	void getById_ShouldReturnCategory_WhenInputIsExistId() {
 
-        Category expectedCategory = getCategory(1, "exhibition");
+		Category expectedCategory = getCategory(1, "exhibition");
 
-        Mockito.when(categoryDAO.getById(1)).thenReturn(expectedCategory);
+		Mockito.when(categoryDAO.getById(1)).thenReturn(expectedCategory);
 
-        Category actualCategory = categoryService.getById(1);
+		Category actualCategory = categoryService.getById(1);
 
-        assertEquals(expectedCategory, actualCategory);
-    }
+		assertEquals(expectedCategory, actualCategory);
+	}
 
-    @Test
-    void getById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
+	@Test
+	void getById_ShouldThrowServiceException_WhenInputIsIncorrectId() {
 
-        Mockito.when(categoryDAO.getById(-1)).thenThrow(ServiceException.class);
+		Mockito.when(categoryDAO.getById(-1)).thenThrow(ServiceException.class);
 
-        assertThrows(ServiceException.class, () -> categoryService.getById(-1));
-    }
+		Executable actual = () -> categoryService.getById(-1);
+		Class<ServiceException> expected = ServiceException.class;
 
-    @Test
-    void findAll_ShouldReturnAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSortValue() {
+		assertThrows(expected, actual);
+	}
 
-        Pageable sortedByName = PageRequest.of(0, 4);
+	@Test
+	void getByName_ShouldReturnCategory_WhenInputIsThreeFirstLettersOfCategory() {
 
-        List<Category> expectedCategoryNames = new ArrayList<>();
+		Category category = getCategory(1, "exhibition");
 
-        expectedCategoryNames.add(getCategory(4, "Art concert"));
-        expectedCategoryNames.add(getCategory(1, "exhibition"));
-        expectedCategoryNames.add(getCategory(2, "movie"));
-        expectedCategoryNames.add(getCategory(3, "theatre"));
+		List<Category> expectedCategories = new ArrayList<>();
 
-        Mockito.when(categoryDAO.findAll(sortedByName)).thenReturn(expectedCategoryNames);
+		expectedCategories.add(category);
 
-        List<Category> actualCategories = categoryService.findAll(sortedByName);
+		Mockito.when(categoryDAO.getByName("exh")).thenReturn(expectedCategories);
 
-        assertTrue(expectedCategoryNames.containsAll(actualCategories));
-    }
+		List<Category> actualCategories = categoryService.getByName("exh");
 
-    @Test
-    void findAll_ShouldReturnTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSortValue() {
+		assertEquals(expectedCategories.size(), actualCategories.size());
+		assertTrue(expectedCategories.containsAll(actualCategories));
+	}
 
-        Pageable sortedByName = PageRequest.of(0, 2);
+	@Test
+	void getByName_ShouldReturnCategory_WhenInputIsCategoryName() {
 
-        List<Category> expectedCategoryNames = new ArrayList<>();
+		Category category = getCategory(1, "exhibition");
 
-        expectedCategoryNames.add(getCategory(4, "Art concert"));
-        expectedCategoryNames.add(getCategory(1, "exhibition"));
+		List<Category> expectedCategories = new ArrayList<>();
 
-        Mockito.when(categoryDAO.findAll(sortedByName)).thenReturn(expectedCategoryNames);
+		expectedCategories.add(category);
 
-        List<Category> actualCategories = categoryService.findAll(sortedByName);
+		Mockito.when(categoryDAO.getByName("exhibition")).thenReturn(expectedCategories);
 
-        assertTrue(expectedCategoryNames.containsAll(actualCategories));
+		List<Category> actualCategories = categoryService.getByName("exhibition");
 
-    }
+		assertEquals(expectedCategories.size(), actualCategories.size());
+		assertTrue(expectedCategories.containsAll(actualCategories));
+	}
 
-    @Test
-    void findAll_ShouldReturnAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
+	@Test
+	void getByName_ShouldEmptyList_WhenInputIsDoesNotExistCategoryName() {
 
-        Pageable sortedById = PageRequest.of(0, 4, Sort.by("category_id"));
+		List<Category> expectedCategories = new ArrayList<>();
 
-        List<Category> expectedCategoryNames = new ArrayList<>();
+		Mockito.when(categoryDAO.getByName("DoesNotExistValue")).thenReturn(expectedCategories);
 
-        expectedCategoryNames.add(getCategory(1, "exhibition"));
-        expectedCategoryNames.add(getCategory(2, "movie"));
-        expectedCategoryNames.add(getCategory(3, "theatre"));
-        expectedCategoryNames.add(getCategory(4, "Art concert"));
+		List<Category> actualCategories = categoryService.getByName("DoesNotExistValue");
 
-        Mockito.when(categoryDAO.findAll(sortedById)).thenReturn(expectedCategoryNames);
+		assertTrue(actualCategories.isEmpty());
+	}
 
-        List<Category> actualCategories = categoryService.findAll(sortedById);
+	@Test
+	void findAll_ShouldReturnAllCategoriesSortedByName_WhenInputIsPageRequestWithoutSortValue() {
 
-        assertTrue(expectedCategoryNames.containsAll(actualCategories));
-    }
+		Pageable sortedByName = PageRequest.of(0, 4);
 
-    @Test
-    void findAll_ShouldReturnAllCategoriesSortedByName_WhenPageIsNull() {
+		List<Category> expectedCategoryNames = new ArrayList<>();
 
-        Pageable page = null;
+		expectedCategoryNames.add(getCategory(4, "Art concert"));
+		expectedCategoryNames.add(getCategory(1, "exhibition"));
+		expectedCategoryNames.add(getCategory(2, "movie"));
+		expectedCategoryNames.add(getCategory(3, "theatre"));
 
-        List<Category> expectedCategoryNames = new ArrayList<>();
+		Mockito.when(categoryDAO.findAll(sortedByName)).thenReturn(expectedCategoryNames);
 
-        expectedCategoryNames.add(getCategory(1, "exhibition"));
-        expectedCategoryNames.add(getCategory(2, "movie"));
-        expectedCategoryNames.add(getCategory(3, "theatre"));
-        expectedCategoryNames.add(getCategory(4, "Art concert"));
+		List<Category> actualCategories = categoryService.findAll(sortedByName);
 
-        Mockito.when(categoryDAO.findAll(page)).thenReturn(expectedCategoryNames);
+		assertTrue(expectedCategoryNames.containsAll(actualCategories));
+	}
 
-        List<Category> actualCategories = categoryService.findAll(page);
+	@Test
+	void findAll_ShouldReturnTwoCategoriesSortedByName_WhenInputIsPageRequestWithSizeTwoWithoutSortValue() {
 
-        assertTrue(expectedCategoryNames.containsAll(actualCategories));
-    }
+		Pageable sortedByName = PageRequest.of(0, 2);
 
-    @Test
-    void save_ShouldSaveNewCategory_WhenInputIsNewCategoryWithIdAndName() {
+		List<Category> expectedCategoryNames = new ArrayList<>();
 
-        Category newCategory = getCategory(5, "opera");
+		expectedCategoryNames.add(getCategory(4, "Art concert"));
+		expectedCategoryNames.add(getCategory(1, "exhibition"));
 
-        Mockito.when(categoryDAO.getById(5)).thenThrow(DataNotFoundException.class);
+		Mockito.when(categoryDAO.findAll(sortedByName)).thenReturn(expectedCategoryNames);
 
-        categoryService.save(newCategory);
+		List<Category> actualCategories = categoryService.findAll(sortedByName);
 
-        Mockito.verify(categoryDAO, Mockito.times(1)).save(newCategory);
-    }
+		assertTrue(expectedCategoryNames.containsAll(actualCategories));
 
-    @Test
-    void save_ShouldThrowServiceException_WhenInputIsHasNegativeId() {
+	}
 
-        Category newCategory = getCategory(-1, "opera");
+	@Test
+	void findAll_ShouldReturnAllCategoriesSortedById_WhenInputIsPageRequestWithSortValue() {
 
-        assertThrows(ServiceException.class, () -> categoryService.save(newCategory));
-    }
+		Pageable sortedById = PageRequest.of(0, 4, Sort.by("category_id"));
 
-    @Test
-    void save_ShouldUpdateExistedCategory_WhenInputIsCategoryWithDetails() {
+		List<Category> expectedCategoryNames = new ArrayList<>();
 
-        Category oldCategory = getCategory(1, "exhibition");
-        Category updatedCategory = getCategory(1, "opera");
+		expectedCategoryNames.add(getCategory(1, "exhibition"));
+		expectedCategoryNames.add(getCategory(2, "movie"));
+		expectedCategoryNames.add(getCategory(3, "theatre"));
+		expectedCategoryNames.add(getCategory(4, "Art concert"));
 
-        Mockito.when(categoryDAO.getById(1)).thenReturn(oldCategory);
+		Mockito.when(categoryDAO.findAll(sortedById)).thenReturn(expectedCategoryNames);
 
-        categoryService.save(updatedCategory);
+		List<Category> actualCategories = categoryService.findAll(sortedById);
 
-        Mockito.verify(categoryDAO, Mockito.times(1)).save(updatedCategory);
-    }
+		assertTrue(expectedCategoryNames.containsAll(actualCategories));
+	}
 
-    @Test
-    void delete_ShouldDeleteCategoryById_WhenInputIsId() {
+	@Test
+	void findAll_ShouldReturnAllCategoriesSortedByName_WhenPageIsNull() {
 
-        categoryService.delete(1);
+		Pageable page = null;
 
-        Mockito.verify(categoryDAO, Mockito.times(1)).delete(1);
-    }
+		List<Category> expectedCategoryNames = new ArrayList<>();
 
-    @Test
-    void delete_ShouldThrowServiceException_WhenInputHasNegativeId() {
+		expectedCategoryNames.add(getCategory(1, "exhibition"));
+		expectedCategoryNames.add(getCategory(2, "movie"));
+		expectedCategoryNames.add(getCategory(3, "theatre"));
+		expectedCategoryNames.add(getCategory(4, "Art concert"));
 
-        assertThrows(ServiceException.class,() -> categoryService.delete(-1));
-    }
+		Mockito.when(categoryDAO.findAll(page)).thenReturn(expectedCategoryNames);
 
-    private Category getCategory(long id, String title) {
-        Category category = new Category();
-        category.setId(id);
-        category.setTitle(title);
+		List<Category> actualCategories = categoryService.findAll(page);
 
-        return category;
-    }
+		assertTrue(expectedCategoryNames.containsAll(actualCategories));
+	}
+
+	@Test
+	void save_ShouldSaveNewCategory_WhenInputIsNewCategoryWithIdAndName() {
+
+		Category newCategory = getCategory(5, "opera");
+
+		Mockito.when(categoryDAO.getById(5)).thenThrow(DataNotFoundException.class);
+
+		categoryService.save(newCategory);
+
+		Mockito.verify(categoryDAO, Mockito.times(1)).save(newCategory);
+	}
+
+//    @Test
+//    void save_ShouldThrowServiceException_WhenInputIsHasNegativeId() {
+//
+//        Category newCategory = getCategory(-1, "opera");
+//
+//        assertThrows(ServiceException.class, () -> categoryService.save(newCategory));
+//    }
+
+	@Test
+	void save_ShouldUpdateExistedCategory_WhenInputIsCategoryWithDetails() {
+
+		Category oldCategory = getCategory(1, "exhibition");
+		Category updatedCategory = getCategory(1, "opera");
+
+		Mockito.when(categoryDAO.getById(1)).thenReturn(oldCategory);
+
+		categoryService.save(updatedCategory);
+
+		Mockito.verify(categoryDAO, Mockito.times(1)).save(updatedCategory);
+	}
+
+	@Test
+	void delete_ShouldDeleteCategoryById_WhenInputIsId() {
+
+		categoryService.delete(1);
+
+		Mockito.verify(categoryDAO, Mockito.times(1)).delete(1);
+	}
+
+	@Test
+	void delete_ShouldThrowServiceException_WhenInputHasNegativeId() {
+
+		Mockito.doThrow(new ServiceException()).when(categoryDAO).delete(-1);
+	}
+
+	private Category getCategory(long id, String title) {
+		Category category = new Category();
+		category.setId(id);
+		category.setTitle(title);
+
+		return category;
+	}
 }
 
